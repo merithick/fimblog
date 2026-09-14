@@ -87,9 +87,16 @@ const DEFAULT_FOOTER_MENU = [
 const SUPABASE_URL = "https://xepxicgiuzxpxwetopdy.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_k6h2Rq5WGn8NqBJZyUXpAw_yBbt-zkP";
 
-const supabase = (typeof window !== "undefined" && window.supabase && window.supabase.createClient) 
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
-  : null;
+let supabase = null;
+try {
+  const createClientFn = window.supabase?.createClient || window.supabaseClient?.createClient || window.createClient;
+  if (typeof createClientFn === "function") {
+    supabase = createClientFn(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (e) {
+  console.warn("Supabase init bypassed safely:", e);
+  supabase = null;
+}
 
 const SupabaseService = {
   fetchArticles: async () => {
@@ -1003,5 +1010,34 @@ const App = function() {
   );
 };
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("FimBlogs UI Error caught:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return React.createElement("div", { className: "container", style: { padding: "4rem 1rem", textAlign: "center" } },
+        React.createElement("h2", { style: { marginBottom: "1rem" } }, "FimBlogs Portal"),
+        React.createElement("p", { style: { color: "var(--text-muted)", marginBottom: "1.5rem" } }, "A minor rendering update occurred. Click below to continue."),
+        React.createElement("button", { className: "btn-primary", onClick: () => { this.setState({ hasError: false }); window.location.hash = "#/"; } }, "Return to Home Page")
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(AppProvider, null, React.createElement(App)));
+root.render(
+  React.createElement(ErrorBoundary, null,
+    React.createElement(AppProvider, null,
+      React.createElement(App, null)
+    )
+  )
+);
