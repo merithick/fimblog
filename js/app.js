@@ -87,22 +87,22 @@ const DEFAULT_FOOTER_MENU = [
 const SUPABASE_URL = "https://xepxicgiuzxpxwetopdy.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_k6h2Rq5WGn8NqBJZyUXpAw_yBbt-zkP";
 
-let supabase = null;
+let supabaseClient = null;
 try {
   const createClientFn = window.supabase?.createClient || window.supabaseClient?.createClient || window.createClient;
   if (typeof createClientFn === "function") {
-    supabase = createClientFn(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = createClientFn(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 } catch (e) {
   console.warn("Supabase init bypassed safely:", e);
-  supabase = null;
+  supabaseClient = null;
 }
 
 const SupabaseService = {
   fetchArticles: async () => {
-    if (!supabase) return null;
+    if (!supabaseClient) return null;
     try {
-      const { data, error } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabaseClient.from('articles').select('*').order('created_at', { ascending: false });
       if (error || !data || data.length === 0) return null;
       return data.map(item => ({
         id: item.id,
@@ -127,7 +127,7 @@ const SupabaseService = {
   },
 
   saveArticle: async (article) => {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     try {
       const payload = {
         id: article.id,
@@ -145,43 +145,43 @@ const SupabaseService = {
         excerpt: article.excerpt,
         content: article.content
       };
-      await supabase.from('articles').upsert(payload, { onConflict: 'id' });
+      await supabaseClient.from('articles').upsert(payload, { onConflict: 'id' });
     } catch (e) {
       console.warn("Supabase save article warning:", e);
     }
   },
 
   deleteArticle: async (id) => {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     try {
-      await supabase.from('articles').delete().eq('id', id);
+      await supabaseClient.from('articles').delete().eq('id', id);
     } catch (e) {
       console.warn("Supabase delete article warning:", e);
     }
   },
 
   updateViews: async (slug, newViews) => {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     try {
-      await supabase.from('articles').update({ views: newViews }).eq('slug', slug);
+      await supabaseClient.from('articles').update({ views: newViews }).eq('slug', slug);
     } catch (e) {
       console.warn("Supabase update views warning:", e);
     }
   },
 
   updateShares: async (slug, newShares) => {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     try {
-      await supabase.from('articles').update({ shares: newShares }).eq('slug', slug);
+      await supabaseClient.from('articles').update({ shares: newShares }).eq('slug', slug);
     } catch (e) {
       console.warn("Supabase update shares warning:", e);
     }
   },
 
   addSubscriber: async (email) => {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     try {
-      await supabase.from('subscribers').insert({ email });
+      await supabaseClient.from('subscribers').insert({ email });
     } catch (e) {
       console.warn("Supabase subscriber warning:", e);
     }
