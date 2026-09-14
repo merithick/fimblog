@@ -194,6 +194,10 @@ const Header = function() {
   const app = useApp();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [app.currentRoute, app.activeCategory]);
+
   return React.createElement("header", { className: "header" },
     React.createElement("div", { className: "container header-container" },
       React.createElement("a", { href: "#/", className: "brand-logo", onClick: () => { app.setActiveCategory("All"); setMobileOpen(false); } },
@@ -208,11 +212,12 @@ const Header = function() {
         ))
       ),
       React.createElement("div", { className: "header-actions" },
-        React.createElement("button", { className: "btn-icon", onClick: app.toggleTheme }, app.theme === "light" ? React.createElement(MoonIcon) : React.createElement(SunIcon)),
-        React.createElement("button", { className: "btn-primary", onClick: () => alert("Subscribed!") }, "Subscribe Briefing"),
-        React.createElement("button", { className: "mobile-menu-toggle", onClick: () => setMobileOpen(!mobileOpen) }, mobileOpen ? "✕" : "☰")
+        React.createElement("button", { className: "btn-icon", onClick: app.toggleTheme, "aria-label": "Toggle Dark Theme" }, app.theme === "light" ? React.createElement(MoonIcon) : React.createElement(SunIcon)),
+        React.createElement("button", { className: "btn-primary btn-subscribe-header", onClick: () => alert("Subscribed!") }, "Subscribe Briefing"),
+        React.createElement("button", { className: "mobile-menu-toggle", onClick: () => setMobileOpen(!mobileOpen), "aria-label": "Toggle Menu" }, mobileOpen ? "✕" : "☰")
       )
-    )
+    ),
+    React.createElement("div", { className: "mobile-backdrop " + (mobileOpen ? "active" : ""), onClick: () => setMobileOpen(false) })
   );
 };
 
@@ -411,7 +416,7 @@ const MainMenuEditorSection = function() {
 
   return React.createElement("div", { style: { background: 'var(--bg-card)', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
     React.createElement("h3", { style: { fontSize: '1.25rem', fontWeight: 800, marginBottom: '1rem' } }, "Header Main Navigation Editor"),
-    React.createElement("form", { onSubmit: handleAdd, style: { display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', marginBottom: '1.5rem' } },
+    React.createElement("form", { onSubmit: handleAdd, className: "admin-inline-form" },
       React.createElement("input", { type: "text", className: "input-styled", placeholder: "Nav Label (e.g. Markets)", value: label, onChange: e => setLabel(e.target.value), required: true }),
       React.createElement("select", { className: "input-styled", value: selectedCat, onChange: e => setSelectedCat(e.target.value) },
         app.categories.map(c => React.createElement("option", { key: c, value: c }, c))
@@ -454,7 +459,7 @@ const FooterMenuEditorSection = function() {
 
   return React.createElement("div", { style: { background: 'var(--bg-card)', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
     React.createElement("h3", { style: { fontSize: '1.25rem', fontWeight: 800, marginBottom: '1rem' } }, "Footer Links Editor"),
-    React.createElement("form", { onSubmit: handleAdd, style: { display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', marginBottom: '1.5rem' } },
+    React.createElement("form", { onSubmit: handleAdd, className: "admin-inline-form" },
       React.createElement("input", { type: "text", className: "input-styled", placeholder: "Footer Label (e.g. Privacy Policy)", value: label, onChange: e => setLabel(e.target.value), required: true }),
       React.createElement("input", { type: "text", className: "input-styled", placeholder: "URL (e.g. #/privacy)", value: url, onChange: e => setUrl(e.target.value), required: true }),
       React.createElement("button", { type: "submit", className: "btn-accent" }, "+ Add Footer Link")
@@ -555,13 +560,13 @@ const AdminArticleEditor = function({ form, setForm, handleSaveForm, app }) {
     reader.readAsDataURL(file);
   };
 
-  return React.createElement("form", { onSubmit: handleSaveForm, style: { display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '2rem' } },
+  return React.createElement("form", { onSubmit: handleSaveForm, className: "admin-editor-grid" },
     React.createElement("div", { style: { background: 'var(--bg-card)', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' } },
       React.createElement("div", { style: { marginBottom: '1.25rem' } },
         React.createElement("label", { style: { fontWeight: 700, display: 'block', fontSize: '0.85rem', marginBottom: '6px' } }, "Article Title (Tamil)"),
         React.createElement("input", { type: "text", className: "input-styled", style: { width: '100%', fontSize: '1rem', fontWeight: 600 }, value: form.title, onChange: e => setForm({ ...form, title: e.target.value }), required: true })
       ),
-      React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' } },
+      React.createElement("div", { className: "admin-form-two-col", style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' } },
         React.createElement("div", null,
           React.createElement("label", { style: { fontWeight: 700, display: 'block', fontSize: '0.85rem', marginBottom: '6px' } }, "Category"),
           React.createElement("select", { className: "input-styled", style: { width: '100%' }, value: form.category, onChange: e => setForm({ ...form, category: e.target.value }) },
@@ -575,8 +580,8 @@ const AdminArticleEditor = function({ form, setForm, handleSaveForm, app }) {
       ),
       React.createElement("div", { style: { marginBottom: '1.25rem' } },
         React.createElement("label", { style: { fontWeight: 700, display: 'block', fontSize: '0.85rem', marginBottom: '6px' } }, "Cover Image"),
-        React.createElement("div", { style: { display: 'flex', gap: '10px' } },
-          React.createElement("input", { type: "text", className: "input-styled", placeholder: "Image URL", value: form.image, onChange: e => setForm({ ...form, image: e.target.value }) }),
+        React.createElement("div", { style: { display: 'flex', gap: '10px', flexWrap: 'wrap' } },
+          React.createElement("input", { type: "text", className: "input-styled", style: { flexGrow: 1, minWidth: '180px' }, placeholder: "Image URL", value: form.image, onChange: e => setForm({ ...form, image: e.target.value }) }),
           React.createElement("label", { className: "btn-secondary", style: { cursor: 'pointer', whiteSpace: 'nowrap' } }, "📁 Upload Image",
             React.createElement("input", { type: "file", accept: "image/*", style: { display: 'none' }, onChange: e => handleImageUpload(e, "cover") })
           )
@@ -585,7 +590,7 @@ const AdminArticleEditor = function({ form, setForm, handleSaveForm, app }) {
 
       /* RICH EDITOR TOOLBAR & HTML/VISUAL TOGGLE */
       React.createElement("div", { style: { marginBottom: '1.25rem' } },
-        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' } },
+        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' } },
           React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
             React.createElement("label", { style: { fontWeight: 700, fontSize: '0.85rem' } }, "Article Content"),
             React.createElement("div", { style: { display: 'inline-flex', background: 'var(--bg-surface)', padding: '2px', borderRadius: '4px', border: '1px solid var(--border-color)' } },
@@ -608,7 +613,7 @@ const AdminArticleEditor = function({ form, setForm, handleSaveForm, app }) {
 
         editorMode === "html" ?
           React.createElement("div", null,
-            React.createElement("div", { style: { display: 'flex', gap: '6px', background: 'var(--bg-surface)', padding: '6px', borderRadius: '4px 4px 0 0', border: '1px solid var(--border-color)', borderBottom: 'none' } },
+            React.createElement("div", { className: "admin-editor-toolbar" },
               React.createElement("button", { type: "button", className: "btn-secondary", style: { padding: '3px 10px', fontWeight: 800 }, onClick: () => insertFormatting("bold") }, "B"),
               React.createElement("button", { type: "button", className: "btn-secondary", style: { padding: '3px 10px', fontStyle: 'italic' }, onClick: () => insertFormatting("italic") }, "I"),
               React.createElement("button", { type: "button", className: "btn-secondary", style: { padding: '3px 10px' }, onClick: () => insertFormatting("link") }, "🔗 Link"),
@@ -774,12 +779,12 @@ const AdminPanel = function({ tab = "dashboard" }) {
         ) :
       currentTab === "articles" ?
         React.createElement("div", null,
-          React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' } },
+          React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '10px' } },
             React.createElement("h2", { style: { fontSize: '1.5rem', fontWeight: 800 } }, "Article Index"),
             React.createElement("button", { className: "btn-primary", onClick: handleCreateNew }, "+ New Article")
           ),
-          React.createElement("div", { style: { background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
-            React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse' } },
+          React.createElement("div", { className: "table-responsive" },
+            React.createElement("table", null,
               React.createElement("thead", null,
                 React.createElement("tr", { style: { background: 'var(--bg-surface)' } },
                   React.createElement("th", { style: { padding: '0.85rem' } }, "Title"),
@@ -795,7 +800,7 @@ const AdminPanel = function({ tab = "dashboard" }) {
                   React.createElement("td", { style: { padding: '0.85rem' } }, art.category),
                   React.createElement("td", { style: { padding: '0.85rem', color: 'var(--accent)', fontWeight: 700 } }, art.views || 0),
                   React.createElement("td", { style: { padding: '0.85rem', color: 'var(--accent)', fontWeight: 700 } }, art.shares || 0),
-                  React.createElement("td", { style: { padding: '0.85rem' } },
+                  React.createElement("td", { style: { padding: '0.85rem', whiteSpace: 'nowrap' } },
                     React.createElement("button", { className: "btn-secondary", style: { marginRight: '4px' }, onClick: () => handleEditInit(art) }, "Edit"),
                     React.createElement("button", { className: "btn-secondary", style: { color: '#ef4444' }, onClick: () => app.deleteArticle(art.id) }, "Delete")
                   )
@@ -847,7 +852,7 @@ const App = function() {
             )
           )
         ),
-        React.createElement("div", { style: { borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-light)' } },
+        React.createElement("div", { className: "footer-bottom-bar" },
           React.createElement("div", null, "© 2026 FimBlogs Inc. All rights reserved."),
           React.createElement("div", null, "FimBlogs Media & Research Network")
         )
