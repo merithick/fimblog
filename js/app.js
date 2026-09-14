@@ -1,8 +1,11 @@
-/* ==========================================================================
-   FIMBLOGS HYBRID ENGINE - FULL RICH TEST ARTICLE (React 18)
-   ========================================================================== */
+(function() {
+  'use strict';
 
-const { useState, useEffect, useMemo, createContext, useContext } = React;
+  /* ==========================================================================
+     FIMBLOGS HYBRID ENGINE - FULL RICH TEST ARTICLE (React 18)
+     ========================================================================== */
+
+  const { useState, useEffect, useMemo, createContext, useContext } = React;
 
 const INITIAL_ARTICLES = [
   {
@@ -1033,11 +1036,12 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  React.createElement(ErrorBoundary, null,
-    React.createElement(AppProvider, null,
-      React.createElement(App, null)
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(
+    React.createElement(ErrorBoundary, null,
+      React.createElement(AppProvider, null,
+        React.createElement(App, null)
+      )
     )
-  )
-);
+  );
+})();
