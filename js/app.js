@@ -81,6 +81,106 @@ const DEFAULT_FOOTER_MENU = [
   { id: "f3", label: "Editorial Guidelines", url: "#/" }
 ];
 
+/* ==========================================================================
+   SUPABASE DATABASE CONFIGURATION & SERVICE
+   ========================================================================== */
+const SUPABASE_URL = "https://xepxicgiuzxpxwetopdy.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_k6h2Rq5WGn8NqBJZyUXpAw_yBbt-zkP";
+
+const supabase = (typeof window !== "undefined" && window.supabase && window.supabase.createClient) 
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
+  : null;
+
+const SupabaseService = {
+  fetchArticles: async () => {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
+      if (error || !data || data.length === 0) return null;
+      return data.map(item => ({
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        category: item.category,
+        readTime: item.read_time || item.readTime || "3 min read",
+        date: item.date,
+        views: item.views || 0,
+        shares: item.shares || 0,
+        seoTitle: item.seo_title || item.seoTitle || item.title,
+        seoDescription: item.seo_description || item.seoDescription || item.excerpt,
+        seoKeywords: item.seo_keywords || item.seoKeywords || "",
+        image: item.image,
+        excerpt: item.excerpt,
+        content: item.content
+      }));
+    } catch (e) {
+      console.warn("Supabase fetch warning:", e);
+      return null;
+    }
+  },
+
+  saveArticle: async (article) => {
+    if (!supabase) return;
+    try {
+      const payload = {
+        id: article.id,
+        slug: article.slug,
+        title: article.title,
+        category: article.category,
+        read_time: article.readTime,
+        date: article.date,
+        views: article.views || 0,
+        shares: article.shares || 0,
+        seo_title: article.seoTitle,
+        seo_description: article.seoDescription,
+        seo_keywords: article.seoKeywords,
+        image: article.image,
+        excerpt: article.excerpt,
+        content: article.content
+      };
+      await supabase.from('articles').upsert(payload, { onConflict: 'id' });
+    } catch (e) {
+      console.warn("Supabase save article warning:", e);
+    }
+  },
+
+  deleteArticle: async (id) => {
+    if (!supabase) return;
+    try {
+      await supabase.from('articles').delete().eq('id', id);
+    } catch (e) {
+      console.warn("Supabase delete article warning:", e);
+    }
+  },
+
+  updateViews: async (slug, newViews) => {
+    if (!supabase) return;
+    try {
+      await supabase.from('articles').update({ views: newViews }).eq('slug', slug);
+    } catch (e) {
+      console.warn("Supabase update views warning:", e);
+    }
+  },
+
+  updateShares: async (slug, newShares) => {
+    if (!supabase) return;
+    try {
+      await supabase.from('articles').update({ shares: newShares }).eq('slug', slug);
+    } catch (e) {
+      console.warn("Supabase update shares warning:", e);
+    }
+  },
+
+  addSubscriber: async (email) => {
+    if (!supabase) return;
+    try {
+      await supabase.from('subscribers').insert({ email });
+    } catch (e) {
+      console.warn("Supabase subscriber warning:", e);
+    }
+  }
+};
+
 const StorageService = {
   getArticles: () => JSON.parse(localStorage.getItem("fimblogs_articles_v9") || JSON.stringify(INITIAL_ARTICLES)),
   saveArticles: (arts) => localStorage.setItem("fimblogs_articles_v9", JSON.stringify(arts)),
@@ -90,7 +190,8 @@ const StorageService = {
   saveMainMenu: (m) => localStorage.setItem("fimblogs_main_menu_v9", JSON.stringify(m)),
   getFooterMenu: () => JSON.parse(localStorage.getItem("fimblogs_footer_menu_v9") || JSON.stringify(DEFAULT_FOOTER_MENU)),
   saveFooterMenu: (m) => localStorage.setItem("fimblogs_footer_menu_v9", JSON.stringify(m)),
-  getSubscribers: () => JSON.parse(localStorage.getItem("fimblogs_subscribers_v9") || JSON.stringify(["corporate.reader@bloomberg.net"]))
+  getSubscribers: () => JSON.parse(localStorage.getItem("fimblogs_subscribers_v9") || JSON.stringify(["corporate.reader@bloomberg.net"])),
+  saveSubscribers: (subs) => localStorage.setItem("fimblogs_subscribers_v9", JSON.stringify(subs))
 };
 
 const AppContext = createContext();
@@ -100,13 +201,28 @@ const AppProvider = function({ children }) {
   const [categories, setCategories] = useState(StorageService.getCategories());
   const [mainMenu, setMainMenu] = useState(StorageService.getMainMenu());
   const [footerMenu, setFooterMenu] = useState(StorageService.getFooterMenu());
-  const [subscribers] = useState(StorageService.getSubscribers());
+  const [subscribers, setSubscribers] = useState(StorageService.getSubscribers());
   
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || "#/");
   const [theme, setTheme] = useState(localStorage.getItem("fimblogs_theme") || "light");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(sessionStorage.getItem("fimblogs_admin") === "true");
+
+  // Fetch live articles from Supabase DB on load
+  useEffect(() => {
+    const syncSupabaseData = async () => {
+      const remoteArticles = await SupabaseService.fetchArticles();
+      if (remoteArticles && remoteArticles.length > 0) {
+        setArticles(remoteArticles);
+        StorageService.saveArticles(remoteArticles);
+      } else {
+        // Seed default articles to Supabase if DB table is initialized
+        INITIAL_ARTICLES.forEach(art => SupabaseService.saveArticle(art));
+      }
+    };
+    syncSupabaseData();
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -125,7 +241,14 @@ const AppProvider = function({ children }) {
     if (!sessionStorage.getItem("viewed_" + slug)) {
       sessionStorage.setItem("viewed_" + slug, "true");
       setArticles(prev => {
-        const updated = prev.map(a => a.slug === slug ? { ...a, views: (a.views || 0) + 1 } : a);
+        const updated = prev.map(a => {
+          if (a.slug === slug) {
+            const newViews = (a.views || 0) + 1;
+            SupabaseService.updateViews(slug, newViews);
+            return { ...a, views: newViews };
+          }
+          return a;
+        });
         StorageService.saveArticles(updated);
         return updated;
       });
@@ -134,7 +257,14 @@ const AppProvider = function({ children }) {
 
   const incrementShareCount = (slug) => {
     setArticles(prev => {
-      const updated = prev.map(a => a.slug === slug ? { ...a, shares: (a.shares || 0) + 1 } : a);
+      const updated = prev.map(a => {
+        if (a.slug === slug) {
+          const newShares = (a.shares || 0) + 1;
+          SupabaseService.updateShares(slug, newShares);
+          return { ...a, shares: newShares };
+        }
+        return a;
+      });
       StorageService.saveArticles(updated);
       return updated;
     });
@@ -145,12 +275,23 @@ const AppProvider = function({ children }) {
     const updated = exists ? articles.map(a => a.id === article.id ? article : a) : [article, ...articles];
     setArticles(updated);
     StorageService.saveArticles(updated);
+    SupabaseService.saveArticle(article);
   };
 
   const deleteArticle = (id) => {
     const updated = articles.filter(a => a.id !== id);
     setArticles(updated);
     StorageService.saveArticles(updated);
+    SupabaseService.deleteArticle(id);
+  };
+
+  const addSubscriber = (email) => {
+    if (email && !subscribers.includes(email)) {
+      const updated = [email, ...subscribers];
+      setSubscribers(updated);
+      StorageService.saveSubscribers(updated);
+      SupabaseService.addSubscriber(email);
+    }
   };
 
   const updateCategories = (newCats) => { setCategories(newCats); StorageService.saveCategories(newCats); };
@@ -161,7 +302,7 @@ const AppProvider = function({ children }) {
     value: {
       articles, saveArticle, deleteArticle, incrementViewCount, incrementShareCount,
       categories, updateCategories, mainMenu, updateMainMenu, footerMenu, updateFooterMenu,
-      subscribers, currentRoute, setCurrentRoute, theme, toggleTheme,
+      subscribers, addSubscriber, currentRoute, setCurrentRoute, theme, toggleTheme,
       searchQuery, setSearchQuery, activeCategory, setActiveCategory,
       isAdminLoggedIn, setIsAdminLoggedIn
     }
@@ -230,6 +371,7 @@ const HeroSection = function() {
   const handleSubscribe = (e) => {
     e.preventDefault();
     if (email.trim()) {
+      app.addSubscriber(email.trim());
       alert(`நன்றி! தினசரி தமிழ் நிதிச் செய்திகள் ${email} முகவரிக்கு அனுப்பப்படும்.`);
       setEmail("");
     }
