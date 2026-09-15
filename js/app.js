@@ -79,9 +79,11 @@ const DEFAULT_MAIN_MENU = [
   { id: "m4", label: "Infographics", category: "Infographics" }
 ];
 const DEFAULT_FOOTER_MENU = [
-  { id: "f1", label: "Privacy Policy", url: "#/" },
-  { id: "f2", label: "Terms of Service", url: "#/" },
-  { id: "f3", label: "Editorial Guidelines", url: "#/" }
+  { id: "f1", label: "About Us", url: "#/page/about-us" },
+  { id: "f2", label: "Contact Us", url: "#/page/contact-us" },
+  { id: "f3", label: "Privacy Policy", url: "#/page/privacy-policy" },
+  { id: "f4", label: "Terms and Conditions", url: "#/page/terms-and-conditions" },
+  { id: "f5", label: "Disclaimer", url: "#/page/disclaimer" }
 ];
 
 /* ==========================================================================
@@ -926,23 +928,19 @@ const QuizWidget = function({ article }) {
   const scorePercentage = Math.round((score / totalQuestions) * 100);
 
   if (submitted) {
-    let wishEmoji = "🏆";
     let wishTitle = "வாழ்த்துக்கள்! (Outstanding!)";
     let wishMsg = "நீங்கள் இந்த கட்டுரையின் நிதித் கருத்துக்களை சிறப்பாக புரிந்துகொண்டுள்ளீர்கள்! தமிழ் நிதி அறிவை மேலும் வளர்த்துக்கொள்ள தொடர்ந்து படியுங்கள்.";
 
     if (scorePercentage < 50) {
-      wishEmoji = "📘";
       wishTitle = "நல்ல முயற்சி! (Keep Learning!)";
       wishMsg = "கட்டுரையை மீண்டும் ஒருமுறை படித்து உங்கள் பங்குச்சந்தை மற்றும் நிதி அறிவை மேம்படுத்திக் கொள்ளுங்கள்!";
     } else if (scorePercentage < 100) {
-      wishEmoji = "🌟";
       wishTitle = "சிறப்பான திறன்! (Great Job!)";
       wishMsg = "பெரும்பாலான கேள்விகளுக்கு சரியாக பதிலளித்துள்ளீர்கள். நீர் ஒரு வளர்ந்து வரும் நிதி நிபுணர்!";
     }
 
     return React.createElement("div", { className: "mcq-quiz-card" },
       React.createElement("div", { className: "quiz-wish-banner" },
-        React.createElement("div", { className: "wish-emoji-badge" }, wishEmoji),
         React.createElement("h2", { className: "wish-title" }, wishTitle),
         React.createElement("p", { className: "wish-message" }, wishMsg),
 
@@ -952,8 +950,8 @@ const QuizWidget = function({ article }) {
         ),
 
         React.createElement("div", { style: { display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' } },
-          React.createElement("button", { className: "btn-primary", onClick: handleRetake, style: { background: 'var(--primary)' } }, "🔄 வினாடி வினாவை மீண்டும் செய்ய (Retake Quiz)"),
-          React.createElement("button", { className: "btn-primary", onClick: handleShareScore, style: { background: '#25D366' } }, "💬 மதிப்பெண்ணை வாட்ஸ்அப்பில் பகிர (Share Result)")
+          React.createElement("button", { className: "btn-primary", onClick: handleRetake, style: { background: 'var(--primary)' } }, "வினாடி வினாவை மீண்டும் செய்ய (Retake Quiz)"),
+          React.createElement("button", { className: "btn-primary", onClick: handleShareScore, style: { background: '#25D366' } }, "மதிப்பெண்ணை வாட்ஸ்அப்பில் பகிர (Share Result)")
         )
       )
     );
@@ -964,7 +962,7 @@ const QuizWidget = function({ article }) {
 
   return React.createElement("div", { className: "mcq-quiz-card" },
     React.createElement("div", { className: "quiz-card-topbar" },
-      React.createElement("span", { className: "quiz-header-badge" }, "💡 3-Min Tamil Quiz Challenge"),
+      React.createElement("span", { className: "quiz-header-badge" }, "3-Min Tamil Quiz Challenge"),
       React.createElement("span", { style: { fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' } }, `Question ${currentIndex + 1} of ${totalQuestions}`)
     ),
 
@@ -1018,7 +1016,7 @@ const QuizWidget = function({ article }) {
           onClick: handleSubmit,
           disabled: Object.keys(selectedAnswers).length < totalQuestions,
           style: { background: 'var(--accent)', opacity: Object.keys(selectedAnswers).length < totalQuestions ? 0.6 : 1 }
-        }, "முடிவுகளைக் காண்க (Complete Quiz) 🎉")
+        }, "முடிவுகளைக் காண்க (Complete Quiz)")
     )
   );
 };
@@ -1036,13 +1034,128 @@ const ArticleDetailView = function({ slug }) {
       React.createElement("span", { className: "article-category-badge" }, article.category),
       React.createElement("h1", { className: "article-full-title" }, article.title),
       React.createElement("div", { style: { fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 600 } },
-        `📅 Published: ${article.date || "14 Sep 2026"} • ⏱️ ${article.readTime || "3 min read"} • 👁️ ${article.views || 0} Views`
+        `Published: ${article.date || "14 Sep 2026"} • ${article.readTime || "3 min read"}`
       )
     ),
     React.createElement("div", { className: "featured-img-container" }, React.createElement("img", { src: article.image, alt: article.title, style: { width: '100%', maxHeight: '440px', objectFit: 'cover' } })),
     React.createElement("div", { className: "article-content", dangerouslySetInnerHTML: { __html: article.content } }),
     React.createElement(SocialShareBar, { article: article }),
     React.createElement(QuizWidget, { article: article })
+  );
+const STATIC_PAGES = {
+  "about-us": {
+    title: "About Us - FimBlogs",
+    heading: "About FimBlogs",
+    subtitle: "Financial Intelligence Made Simple in Tamil",
+    content: `
+      <p>Welcome to <b>FimBlogs</b>, your premier digital network dedicated to breaking down complex financial news, stock market updates, macroeconomic analysis, and personal finance strategies into simple, easy-to-understand Tamil.</p>
+      <h2>Our Mission</h2>
+      <p>Financial literacy is the foundation of economic independence. At FimBlogs, our mission is to empower Tamil readers across the globe with high-signal, zero-fluff financial insights in 3-minute daily briefings. Whether you are a beginner looking to understand SIP investments or an experienced trader analyzing stock trends, FimBlogs delivers clear, actionable knowledge.</p>
+      <h2>What We Offer</h2>
+      <ul>
+        <li><b>Daily Market Insights:</b> Clear breakdown of Indian stock markets (NSE & BSE), global trends, and corporate financial performance.</li>
+        <li><b>Personal Finance & Compounding:</b> Practical guides on wealth creation, mutual funds, tax-saving strategies, and risk management.</li>
+        <li><b>Interactive Learning:</b> Engaging Tamil quizzes to test and reinforce your financial understanding.</li>
+      </ul>
+      <h2>Our Editorial Standard</h2>
+      <p>We believe in independence, accuracy, and reader-first reporting. Every briefing is curated by financial enthusiasts and translated into accessible Tamil without overwhelming technical jargon.</p>
+    `
+  },
+  "contact-us": {
+    title: "Contact Us - FimBlogs",
+    heading: "Contact Us",
+    subtitle: "Get in touch with the FimBlogs editorial and support team",
+    content: `
+      <p>Have questions, feedback, or media inquiries? We would love to hear from you!</p>
+      <h2>Editorial & News Desk</h2>
+      <p>If you have news tips, financial topic requests, or feedback regarding our content, please reach out to us at:</p>
+      <p><b>Email:</b> contact@fimblogs.in</p>
+      <h2>Advertising & Sponsorships</h2>
+      <p>For brand partnerships, newsletter sponsorships, or advertising inquiries, contact our media team:</p>
+      <p><b>Business Email:</b> media@fimblogs.in</p>
+      <h2>WhatsApp Channel</h2>
+      <p>Join our official WhatsApp channel for instant Tamil financial updates: <a href="https://whatsapp.com/channel/0029VbDiSjk11ulWMY06Z93w" target="_blank" rel="noopener">Join FimBlogs on WhatsApp</a></p>
+      <h2>Office Address</h2>
+      <p>FimBlogs Media Network,<br/>Chennai, Tamil Nadu, India - 600001</p>
+    `
+  },
+  "privacy-policy": {
+    title: "Privacy Policy - FimBlogs",
+    heading: "Privacy Policy",
+    subtitle: "How we collect, protect, and respect your personal information",
+    content: `
+      <p>Last updated: September 15, 2026</p>
+      <p>At <b>FimBlogs</b> (accessible from https://fimblogs.in), the privacy of our visitors is one of our top priorities. This Privacy Policy document outlines the types of information collected and recorded by FimBlogs and how we use it.</p>
+      <h2>Information We Collect</h2>
+      <p>We collect minimal information necessary to deliver a seamless reader experience:</p>
+      <ul>
+        <li><b>Email Addresses:</b> Provided voluntarily when subscribing to our daily financial briefings.</li>
+        <li><b>Usage Data:</b> Standard log files including anonymous page views, device types, and referral sources to optimize performance.</li>
+      </ul>
+      <h2>How We Use Your Information</h2>
+      <p>We use the collected data strictly to:</p>
+      <ul>
+        <li>Provide, operate, and maintain our blog and quiz platform.</li>
+        <li>Send periodic financial newsletters and briefing updates.</li>
+        <li>Improve and personalize reader experience based on popular topics.</li>
+        <li>Prevent security threats, unauthorized access, and malicious activity.</li>
+      </ul>
+      <h2>Data Protection & Cookies</h2>
+      <p>FimBlogs does not sell, trade, or rent readers' personal information to third parties. We use essential local browser storage to save reader preferences such as dark mode and quiz progress.</p>
+      <h2>Third-Party Services</h2>
+      <p>Our website utilizes secure cloud infrastructure (Supabase) for real-time article delivery and subscriber management. All data transmissions are encrypted using standard TLS protocols.</p>
+    `
+  },
+  "terms-and-conditions": {
+    title: "Terms and Conditions - FimBlogs",
+    heading: "Terms and Conditions",
+    subtitle: "Rules and guidelines for using the FimBlogs platform",
+    content: `
+      <p>Last updated: September 15, 2026</p>
+      <p>Welcome to <b>FimBlogs</b>! By accessing or using our website located at https://fimblogs.in, you agree to comply with and be bound by the following Terms and Conditions.</p>
+      <h2>Intellectual Property Rights</h2>
+      <p>Unless otherwise stated, FimBlogs and/or its licensors own the intellectual property rights for all original content, Tamil briefings, graphics, and interactive material on this site. You may view and read content for personal, non-commercial use only.</p>
+      <h2>Restrictions</h2>
+      <p>You are explicitly restricted from:</p>
+      <ul>
+        <li>Republishing FimBlogs content on other commercial media platforms without proper attribution.</li>
+        <li>Using this website in any way that damages, disables, or overburdens our infrastructure.</li>
+        <li>Engaging in automated data scraping, harvesting, or extraction.</li>
+      </ul>
+      <h2>User Submissions & Quiz Participation</h2>
+      <p>Quiz responses and subscriber entries must be submitted in good faith. FimBlogs reserves the right to modify or remove content at any time without prior notice.</p>
+    `
+  },
+  "disclaimer": {
+    title: "Disclaimer - FimBlogs",
+    heading: "Financial & Investment Disclaimer",
+    subtitle: "Educational purpose disclaimer regarding financial content",
+    content: `
+      <p>Last updated: September 15, 2026</p>
+      <p>The information provided on <b>FimBlogs</b> (https://fimblogs.in) is for general educational and informational purposes only. All financial news, market summaries, stock analysis, and investment concepts published in Tamil are intended to foster financial awareness.</p>
+      <h2>Not Financial or Investment Advice</h2>
+      <p><b>FimBlogs is not a SEBI-registered financial advisor, broker, or investment advisory firm.</b> Nothing published on this website constitutes professional financial, tax, legal, or investment advice. Readers should not construe any article as a recommendation to buy, sell, or hold any financial security or asset.</p>
+      <h2>Risk Warning</h2>
+      <p>Investing in stock markets, mutual funds, derivatives, and financial instruments involves substantial risk of capital loss. Past performance of any company or strategy does not guarantee future results. Always consult a certified financial advisor before making any financial or investment decisions.</p>
+      <h2>Accuracy of Information</h2>
+      <p>While we strive to keep information accurate and up to date, FimBlogs makes no warranties about the completeness, reliability, or accuracy of market data provided by third-party sources.</p>
+    `
+  }
+};
+
+const StaticPageView = function({ pageKey }) {
+  const page = STATIC_PAGES[pageKey] || STATIC_PAGES["about-us"];
+
+  useEffect(() => { window.scrollTo(0, 0); }, [pageKey]);
+
+  return React.createElement("article", { className: "container container-narrow article-detail-container" },
+    React.createElement(SEOHead, { title: page.title, description: page.subtitle }),
+    React.createElement("header", { className: "article-header" },
+      React.createElement("span", { className: "article-category-badge" }, "FimBlogs Information"),
+      React.createElement("h1", { className: "article-full-title" }, page.heading),
+      React.createElement("p", { style: { fontSize: '1.05rem', color: 'var(--text-muted)', marginTop: '0.5rem' } }, page.subtitle)
+    ),
+    React.createElement("div", { className: "article-content", style: { marginTop: '2rem' }, dangerouslySetInnerHTML: { __html: page.content } })
   );
 };
 
@@ -1912,6 +2025,7 @@ const App = function() {
   let content;
   if (app.currentRoute === "#/" || app.currentRoute === "") content = React.createElement(HomeView);
   else if (app.currentRoute.startsWith("#/article/")) content = React.createElement(ArticleDetailView, { slug: app.currentRoute.replace("#/article/", "") });
+  else if (app.currentRoute.startsWith("#/page/")) content = React.createElement(StaticPageView, { pageKey: app.currentRoute.replace("#/page/", "") });
   else if (app.currentRoute === "#/secret-admin") content = app.isAdminLoggedIn ? React.createElement(AdminPanel, { tab: "dashboard" }) : React.createElement(AdminLogin);
   else if (app.currentRoute.startsWith("#/secret-admin/")) content = app.isAdminLoggedIn ? React.createElement(AdminPanel, { tab: app.currentRoute.replace("#/secret-admin/", "") }) : React.createElement(AdminLogin);
   else content = React.createElement(HomeView);
@@ -1931,13 +2045,15 @@ const App = function() {
           React.createElement("div", null,
             React.createElement("div", { style: { fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '12px', color: 'var(--text-muted)' } }, "Categories"),
             React.createElement("ul", { style: { listStyle: 'none', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '6px' } },
-              app.categories.map(c => React.createElement("li", { key: c }, c))
+              app.categories.map(c => React.createElement("li", { key: c },
+                React.createElement("a", { href: "#/", className: "footer-link", onClick: () => app.setActiveCategory(c) }, c)
+              ))
             )
           ),
           React.createElement("div", null,
             React.createElement("div", { style: { fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '12px', color: 'var(--text-muted)' } }, "Legal & Links"),
             React.createElement("ul", { style: { listStyle: 'none', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '6px' } },
-              app.footerMenu.map(item => React.createElement("li", { key: item.id }, React.createElement("a", { href: item.url }, item.label)))
+              app.footerMenu.map(item => React.createElement("li", { key: item.id }, React.createElement("a", { href: item.url, className: "footer-link" }, item.label)))
             )
           )
         ),
