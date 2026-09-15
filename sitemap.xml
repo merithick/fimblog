@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Home Page -->
+  <url>
+    <loc>https://fimblogs.in/</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="ta-IN" href="https://fimblogs.in/" />
+    <xhtml:link rel="alternate" hreflang="ta" href="https://fimblogs.in/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://fimblogs.in/" />
+  </url>
+
+  <!-- Category: Daily Insights -->
+  <url>
+    <loc>https://fimblogs.in/#/category/daily-insights</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Category: Markets -->
+  <url>
+    <loc>https://fimblogs.in/#/category/markets</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Category: Personal Finance -->
+  <url>
+    <loc>https://fimblogs.in/#/category/personal-finance</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Category: Infographics -->
+  <url>
+    <loc>https://fimblogs.in/#/category/infographics</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Article 1: Indian Stock Market 2026 -->
+  <url>
+    <loc>https://fimblogs.in/#/article/rich-test-article-tamil-finance-guide</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>இந்திய பங்குச்சந்தை 2026: 5 முக்கிய விதிகள்</image:title>
+    </image:image>
+  </url>
+
+  <!-- Article 2: US Treasury Bond Yields -->
+  <url>
+    <loc>https://fimblogs.in/#/article/us-treasury-bond-yields-explained-in-tamil</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>அமெரிக்க பத்திர லாபம் (Treasury Bond Yields) தமிழ் விளக்கம்</image:title>
+    </image:image>
+  </url>
+
+  <!-- Article 3: Tesla Robotaxi Analysis -->
+  <url>
+    <loc>https://fimblogs.in/#/article/tesla-robotaxi-business-model-tamil</loc>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>டெஸ்லா ரோபோடாக்ஸி (Tesla Robotaxi) தமிழ் பகுப்பாய்வு</image:title>
+    </image:image>
+  </url>
+
+</urlset>

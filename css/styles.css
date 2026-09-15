@@ -513,6 +513,65 @@ h1, h2, h3, h4, .hero-title, .hero-title-tamil, .article-card-title, .article-fu
   transform: scale(0.98);
 }
 
+/* WHATSAPP CHANNEL PROMOTION STYLES */
+.btn-whatsapp-header {
+  background: #25D366 !important;
+  color: white !important;
+  font-weight: 800;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s, transform 0.15s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-whatsapp-header:hover {
+  background: #1da851 !important;
+  transform: translateY(-1px);
+}
+
+.hero-whatsapp-box {
+  background: var(--bg-card);
+  border: 2px solid #25D366;
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  max-width: 520px;
+  box-shadow: 0 10px 25px rgba(37, 211, 102, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.btn-whatsapp-hero {
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  color: white !important;
+  font-weight: 800;
+  font-size: 1rem;
+  border: none;
+  padding: 0.85rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
+  transition: transform 0.15s, opacity 0.15s;
+  width: 100%;
+}
+
+.btn-whatsapp-hero:hover {
+  opacity: 0.95;
+  transform: translateY(-2px);
+}
+
 /* ATTRACTIVE 3D IPHONE MOCKUP RESPONSIVE */
 .phone-mockup-wrapper {
   display: flex;
@@ -1254,3 +1313,444 @@ h1, h2, h3, h4, .hero-title, .hero-title-tamil, .article-card-title, .article-fu
     gap: 0.5rem;
   }
 }
+
+/* ==========================================================================
+   ARTICLE SHARING & MCQ QUIZ WISH CELEBRATION STYLES
+   ========================================================================== */
+
+/* Social Share Bar */
+.share-bar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  margin: 2rem 0;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.share-bar-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+}
+
+.share-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-share-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.btn-share-icon:hover {
+  transform: translateY(-2px) scale(1.05);
+  opacity: 0.9;
+}
+
+.btn-share-whatsapp { background: #25D366; }
+.btn-share-telegram { background: #0088cc; }
+.btn-share-x { background: #000000; }
+[data-theme="dark"] .btn-share-x { background: #ffffff; color: #000000; }
+.btn-share-linkedin { background: #0A66C2; }
+.btn-share-facebook { background: #1877F2; }
+.btn-share-native { background: #6366f1; }
+.btn-share-copy { background: #64748b; }
+
+/* Toast Notification */
+.fimblogs-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #10b981;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+  z-index: 1000;
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toastSlideIn {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* MCQ Quiz Widget Styles */
+.mcq-quiz-card {
+  background: var(--bg-card);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin: 3rem 0;
+  box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .mcq-quiz-card {
+    padding: 1.25rem;
+    margin: 2rem 0;
+  }
+}
+
+.quiz-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.quiz-progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-surface);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 1rem 0 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.quiz-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #6366f1);
+  transition: width 0.3s ease;
+}
+
+.quiz-question-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 1.25rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.quiz-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.85rem 1.15rem;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.quiz-option-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  transform: translateX(4px);
+}
+
+.quiz-option-btn.selected {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.quiz-option-btn.correct {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  color: #065f46;
+}
+[data-theme="dark"] .quiz-option-btn.correct { color: #a7f3d0; }
+
+.quiz-option-btn.wrong {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  color: #991b1b;
+}
+[data-theme="dark"] .quiz-option-btn.wrong { color: #fecaca; }
+
+.quiz-option-letter {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.quiz-explanation-box {
+  background: var(--bg-surface);
+  border-left: 4px solid #6366f1;
+  padding: 1rem;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* SCORE-BASED WISH CELEBRATION BANNER */
+.quiz-wish-banner {
+  text-align: center;
+  padding: 2rem 1rem;
+  animation: wishPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes wishPopIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.wish-emoji-badge {
+  font-size: 3.5rem;
+  margin-bottom: 0.75rem;
+  display: inline-block;
+  animation: pulseBounce 2s infinite alternate;
+}
+
+@keyframes pulseBounce {
+  0% { transform: scale(1) translateY(0); }
+  100% { transform: scale(1.1) translateY(-6px); }
+}
+
+.wish-title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.wish-message {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.score-badge-big {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #10b981, #6366f1);
+  color: white;
+  padding: 1rem 2.5rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+  margin-bottom: 1.75rem;
+}
+
+.score-badge-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.score-badge-sub {
+  font-size: 0.85rem;
+  font-weight: 700;
+  opacity: 0.9;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* GOOGLE SERP SITELINKS PREVIEW STYLES */
+.serp-sitelinks-container {
+  background: #202124;
+  color: #bdc1c6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-family: Roboto, Arial, sans-serif;
+  margin-top: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  border: 1px solid #3c4043;
+}
+
+.serp-site-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.serp-site-icon {
+  width: 28px;
+  height: 28px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+
+.serp-site-name {
+  color: #e8eaed;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.serp-site-url {
+  color: #9aa0a6;
+  font-size: 0.8rem;
+}
+
+.serp-site-title {
+  color: #8ab4f8;
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.3;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.serp-site-title:hover {
+  text-decoration: underline;
+}
+
+.serp-site-snippet {
+  color: #bdc1c6;
+  font-size: 0.875rem;
+  line-height: 1.58;
+  margin-bottom: 1.25rem;
+}
+
+.serp-sitelinks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  border-top: 1px solid #3c4043;
+  padding-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .serp-sitelinks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sitelink-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sitelink-title {
+  color: #8ab4f8;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.sitelink-desc {
+  color: #9aa0a6;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* WHATSAPP CHANNEL PROMOTION STYLES */
+.btn-whatsapp-header {
+  background: #25d366 !important;
+  color: white !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  padding: 0.6rem 1.2rem;
+  border-radius: 99px;
+  text-decoration: none;
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.btn-whatsapp-header:hover {
+  background: #20ba5a !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+}
+
+.hero-whatsapp-box {
+  background: linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(16, 185, 129, 0.04));
+  border: 1px solid #25d366;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.15rem;
+  margin-top: 1.1rem;
+  max-width: 480px;
+}
+
+.hero-whatsapp-box-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+  line-height: 1.45;
+}
+
+.btn-whatsapp-hero {
+  background: #25d366;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.925rem;
+  font-weight: 700;
+  padding: 0.65rem 1.25rem;
+  border-radius: 99px;
+  text-decoration: none;
+  width: 100%;
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+}
+
+.btn-whatsapp-hero:hover {
+  background: #20ba5a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.4);
+}
+
+
+

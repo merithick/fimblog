@@ -188,6 +188,68 @@ const SupabaseService = {
     } catch (e) {
       console.warn("Supabase subscriber warning:", e);
     }
+  },
+
+  fetchQuizByArticleId: async (articleId) => {
+    if (!supabaseClient) return null;
+    try {
+      const { data, error } = await supabaseClient.from('quizzes').select('*').eq('article_id', articleId).single();
+      if (error || !data) return null;
+      return data;
+    } catch (e) { return null; }
+  },
+
+  fetchQuestionsByQuizId: async (quizId) => {
+    if (!supabaseClient) return null;
+    try {
+      const { data, error } = await supabaseClient.from('quiz_questions').select('*').eq('quiz_id', quizId).order('question_order', { ascending: true });
+      if (error || !data) return null;
+      return data;
+    } catch (e) { return null; }
+  },
+
+  saveQuiz: async (quiz) => {
+    if (!supabaseClient) return;
+    try {
+      await supabaseClient.from('quizzes').upsert(quiz, { onConflict: 'id' });
+    } catch (e) { console.warn("Supabase save quiz warning:", e); }
+  },
+
+  deleteQuiz: async (id) => {
+    if (!supabaseClient) return;
+    try {
+      await supabaseClient.from('quizzes').delete().eq('id', id);
+    } catch (e) { console.warn("Supabase delete quiz warning:", e); }
+  },
+
+  saveQuizQuestion: async (question) => {
+    if (!supabaseClient) return;
+    try {
+      await supabaseClient.from('quiz_questions').upsert(question, { onConflict: 'id' });
+    } catch (e) { console.warn("Supabase save question warning:", e); }
+  },
+
+  deleteQuizQuestion: async (id) => {
+    if (!supabaseClient) return;
+    try {
+      await supabaseClient.from('quiz_questions').delete().eq('id', id);
+    } catch (e) { console.warn("Supabase delete question warning:", e); }
+  },
+
+  saveQuizAttempt: async (attempt) => {
+    if (!supabaseClient) return;
+    try {
+      await supabaseClient.from('quiz_attempts').insert(attempt);
+    } catch (e) { console.warn("Supabase save attempt warning:", e); }
+  },
+
+  fetchAllQuizzes: async () => {
+    if (!supabaseClient) return null;
+    try {
+      const { data, error } = await supabaseClient.from('quizzes').select('*').order('created_at', { ascending: false });
+      if (error || !data) return null;
+      return data;
+    } catch (e) { return null; }
   }
 };
 
@@ -201,7 +263,11 @@ const StorageService = {
   getFooterMenu: () => JSON.parse(localStorage.getItem("fimblogs_footer_menu_v9") || JSON.stringify(DEFAULT_FOOTER_MENU)),
   saveFooterMenu: (m) => localStorage.setItem("fimblogs_footer_menu_v9", JSON.stringify(m)),
   getSubscribers: () => JSON.parse(localStorage.getItem("fimblogs_subscribers_v9") || JSON.stringify(["corporate.reader@bloomberg.net"])),
-  saveSubscribers: (subs) => localStorage.setItem("fimblogs_subscribers_v9", JSON.stringify(subs))
+  saveSubscribers: (subs) => localStorage.setItem("fimblogs_subscribers_v9", JSON.stringify(subs)),
+  getQuizzes: () => JSON.parse(localStorage.getItem("fimblogs_quizzes_v9") || "[]"),
+  saveQuizzes: (q) => localStorage.setItem("fimblogs_quizzes_v9", JSON.stringify(q)),
+  getQuizQuestions: () => JSON.parse(localStorage.getItem("fimblogs_quiz_questions_v9") || "[]"),
+  saveQuizQuestions: (q) => localStorage.setItem("fimblogs_quiz_questions_v9", JSON.stringify(q))
 };
 
 const AppContext = createContext();
@@ -364,7 +430,17 @@ const Header = function() {
       ),
       React.createElement("div", { className: "header-actions" },
         React.createElement("button", { className: "btn-icon", onClick: app.toggleTheme, "aria-label": "Toggle Dark Theme" }, app.theme === "light" ? React.createElement(MoonIcon) : React.createElement(SunIcon)),
-        React.createElement("button", { className: "btn-primary btn-subscribe-header", onClick: () => alert("Subscribed!") }, "Subscribe Briefing"),
+        React.createElement("a", {
+          href: "https://whatsapp.com/channel/0029VbDiSjk11ulWMY06Z93w",
+          target: "_blank",
+          rel: "noopener noreferrer",
+          className: "btn-whatsapp-header"
+        },
+          React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor" },
+            React.createElement("path", { d: "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.197 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c-.001 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413" })
+          ),
+          "Join WhatsApp Channel"
+        ),
         React.createElement("button", { className: "mobile-menu-toggle", onClick: () => setMobileOpen(!mobileOpen), "aria-label": "Toggle Menu" }, mobileOpen ? "✕" : "☰")
       )
     ),
@@ -375,29 +451,31 @@ const Header = function() {
 // FINSHOTS HERO SECTION
 const HeroSection = function() {
   const app = useApp();
-  const [email, setEmail] = useState("");
   const featured = app.articles[0] || INITIAL_ARTICLES[0];
-
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (email.trim()) {
-      app.addSubscriber(email.trim());
-      alert(`நன்றி! தினசரி தமிழ் நிதிச் செய்திகள் ${email} முகவரிக்கு அனுப்பப்படும்.`);
-      setEmail("");
-    }
-  };
 
   return React.createElement("section", { className: "hero" },
     React.createElement("div", { className: "container hero-grid" },
       React.createElement("div", null,
-        React.createElement("div", { className: "subscribers-badge" }, "Loved by 50,000+ Tamil Readers"),
+        React.createElement("div", { className: "subscribers-badge" }, "Loved by 10,000+ Readers"),
         React.createElement("h1", { className: "hero-title-tamil" }, "நிதிச் செய்திகள் மிகவும் எளிமையாக (Financial News Made Simple in Tamil)"),
         React.createElement("p", { className: "hero-description-main" },
           "சமீபத்திய மற்றும் முக்கியமான பொருளாதார மற்றும் பங்குச்சந்தை தகவல்களை எளிய தமிழில் 3 நிமிடங்களில் படித்து தெரிந்துகொள்ளுங்கள்."
         ),
-        React.createElement("form", { onSubmit: handleSubscribe, className: "sub-form-main" },
-          React.createElement("input", { type: "email", className: "input-email-main", placeholder: "உங்கள் ஈமெயில் முகவரி", value: email, onChange: e => setEmail(e.target.value), required: true }),
-          React.createElement("button", { type: "submit", className: "btn-subscribe-main" }, "SUBSCRIBE")
+        React.createElement("div", { className: "hero-whatsapp-box" },
+          React.createElement("p", { className: "hero-whatsapp-box-desc" },
+            "தினசரி புதிய தமிழ் நிதி மற்றும் பங்குச்சந்தை கட்டுரைகளின் நேரடி லிங்குகளை நமது WhatsApp சேனலில் உடனுக்குடன் பெறுங்கள்!"
+          ),
+          React.createElement("a", {
+            href: "https://whatsapp.com/channel/0029VbDiSjk11ulWMY06Z93w",
+            target: "_blank",
+            rel: "noopener noreferrer",
+            className: "btn-whatsapp-hero"
+          },
+            React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "currentColor" },
+              React.createElement("path", { d: "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.197 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c-.001 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413" })
+            ),
+            "Join Channel on WhatsApp"
+          )
         )
       ),
 
@@ -421,6 +499,7 @@ const HeroSection = function() {
     )
   );
 };
+
 
 const ArticleCard = function({ article }) {
   return React.createElement("div", { className: "article-card", onClick: () => window.location.hash = "#/article/" + article.slug },
@@ -471,6 +550,382 @@ const HomeView = function() {
   );
 };
 
+const SocialShareBar = function({ article }) {
+  const app = useApp();
+  const [toastMsg, setToastMsg] = useState("");
+
+  const shareUrl = window.location.href;
+  const shareTitle = article.title;
+
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(""), 3000);
+  };
+
+  const handleShareClick = (platform) => {
+    app.incrementShareCount(article.slug);
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedText = encodeURIComponent(`FimBlogs: ${shareTitle}`);
+
+    if (platform === 'whatsapp') {
+      window.open(`https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`, '_blank');
+    } else if (platform === 'telegram') {
+      window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
+    } else if (platform === 'x') {
+      window.open(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`, '_blank');
+    } else if (platform === 'linkedin') {
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`, '_blank');
+    } else if (platform === 'facebook') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
+    } else if (platform === 'copy') {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast("✓ Link copied to clipboard!");
+        }).catch(() => {
+          showToast("✓ Link copied!");
+        });
+      } else {
+        showToast("✓ Link ready to share!");
+      }
+    } else if (platform === 'native') {
+      if (navigator.share) {
+        navigator.share({ title: shareTitle, text: `FimBlogs: ${shareTitle}`, url: shareUrl }).catch(() => {});
+      } else {
+        if (navigator.clipboard) navigator.clipboard.writeText(shareUrl);
+        showToast("✓ Link copied to clipboard!");
+      }
+    }
+  };
+
+  return React.createElement("div", { className: "share-bar-container" },
+    React.createElement("div", { className: "share-bar-title" },
+      React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
+        React.createElement("circle", { cx: "18", cy: "5", r: "3" }),
+        React.createElement("circle", { cx: "6", cy: "12", r: "3" }),
+        React.createElement("circle", { cx: "18", cy: "19", r: "3" }),
+        React.createElement("line", { x1: "8.59", y1: "13.51", x2: "15.42", y2: "17.49" }),
+        React.createElement("line", { x1: "15.41", y1: "6.51", x2: "8.59", y2: "10.49" })
+      ),
+      "கட்டுரையைப் பகிர்க (Share Briefing):"
+    ),
+    React.createElement("div", { className: "share-buttons-group" },
+      React.createElement("button", { className: "btn-share-icon btn-share-whatsapp", onClick: () => handleShareClick('whatsapp'), title: "Share on WhatsApp", "aria-label": "WhatsApp Share" },
+        React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor" },
+          React.createElement("path", { d: "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.197 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c-.001 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413" })
+        )
+      ),
+      React.createElement("button", { className: "btn-share-icon btn-share-telegram", onClick: () => handleShareClick('telegram'), title: "Share on Telegram", "aria-label": "Telegram Share" },
+        React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor" },
+          React.createElement("path", { d: "M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.562 8.161c-.18.717-.962 4.084-1.362 5.762-.168.707-.428.944-.68.968-.548.051-.965-.36-1.496-.708-.832-.546-1.302-.885-2.11-1.417-.934-.615-.328-.953.204-1.506.139-.145 2.558-2.344 2.605-2.544.006-.025.01-.12-.046-.17-.056-.05-.138-.033-.198-.02-.084.019-1.433.912-4.045 2.678-.383.262-.73.39-1.041.383-.344-.008-1.006-.194-1.498-.354-.604-.196-1.084-.3-1.042-.633.022-.173.262-.35.72-.53 2.825-1.23 4.709-2.042 5.653-2.434 2.688-1.118 3.247-1.313 3.612-1.319.08 0 .259.02.375.115.098.08.125.189.138.265.013.076.029.255.016.395z" })
+        )
+      ),
+      React.createElement("button", { className: "btn-share-icon btn-share-x", onClick: () => handleShareClick('x'), title: "Share on X", "aria-label": "X Share" },
+        React.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "currentColor" },
+          React.createElement("path", { d: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" })
+        )
+      ),
+      React.createElement("button", { className: "btn-share-icon btn-share-linkedin", onClick: () => handleShareClick('linkedin'), title: "Share on LinkedIn", "aria-label": "LinkedIn Share" },
+        React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor" },
+          React.createElement("path", { d: "M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" })
+        )
+      ),
+      React.createElement("button", { className: "btn-share-icon btn-share-facebook", onClick: () => handleShareClick('facebook'), title: "Share on Facebook", "aria-label": "Facebook Share" },
+        React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor" },
+          React.createElement("path", { d: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" })
+        )
+      ),
+      navigator.share && React.createElement("button", { className: "btn-share-icon btn-share-native", onClick: () => handleShareClick('native'), title: "Share via Device", "aria-label": "Native Share" },
+        React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
+          React.createElement("circle", { cx: "18", cy: "5", r: "3" }),
+          React.createElement("circle", { cx: "6", cy: "12", r: "3" }),
+          React.createElement("circle", { cx: "18", cy: "19", r: "3" }),
+          React.createElement("line", { x1: "8.59", y1: "13.51", x2: "15.42", y2: "17.49" }),
+          React.createElement("line", { x1: "15.41", y1: "6.51", x2: "8.59", y2: "10.49" })
+        )
+      ),
+      React.createElement("button", { className: "btn-share-icon btn-share-copy", onClick: () => handleShareClick('copy'), title: "Copy Link", "aria-label": "Copy Link" },
+        React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
+          React.createElement("path", { d: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" }),
+          React.createElement("path", { d: "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" })
+        )
+      )
+    ),
+    toastMsg && React.createElement("div", { className: "fimblogs-toast" }, toastMsg)
+  );
+};
+
+const DEFAULT_QUIZZES = {
+  "rich-test-article-tamil-finance": [
+    {
+      id: "q1",
+      question: "பங்குச்சந்தை நிலையற்ற தன்மையை வெல்லக்கூடிய சிறந்த முதலீட்டு முறை எது?",
+      options: ["ஒரே நாளில் அதிக பங்குகளை வாங்குவது", "SIP (Systematic Investment Plan) முறை", "கடன் வாங்கி முதலீடு செய்வது", "பங்குகளை உடனே விற்பது"],
+      correct: 1,
+      explanation: "SIP முறையில் தொடர்ச்சியாக முதலீடு செய்வதே சந்தை ஏற்ற இறக்கங்களைச் சமாளித்து நீண்டகாலத்தில் செல்வத்தை உருவாக்கும் சிறந்த வழியாகும்."
+    },
+    {
+      id: "q2",
+      question: "உங்கள் முதலீட்டின் அபாயத்தை (Risk) குறைக்க என்ன செய்ய வேண்டும்?",
+      options: ["ஒரே நிறுவனத்தின் பங்குகளை வாங்குவது", "பல்வேறு துறைகளில் பிரித்து முதலீடு செய்வது (Diversification)", "தினமும் பங்குகளின் விலையை கவனிப்பது", "எந்த பங்கையும் வாங்காமல் இருப்பது"],
+      correct: 1,
+      explanation: "முதலீடுகளை பல துறைகளில் பிரித்து முதலீடு செய்வதன் மூலம் (Diversification) உங்கள் அபாயத்தைக் குறைக்கலாம்."
+    },
+    {
+      id: "q3",
+      question: "2026 ஆம் ஆண்டிலும் முதலீட்டில் வெற்றி பெற எந்த காரணி மிக முக்கியம்?",
+      options: ["குறுகிய கால வர்த்தகம்", "கூட்டு வட்டியின் ஆற்றல் (Power of Compounding)", "வதந்திகளை நம்புவது", "சந்தை வீழ்ச்சியின் போது பயந்து விற்பது"],
+      correct: 1,
+      explanation: "சீராக முதலீடு செய்யும்போது கூட்டு வட்டி (Compounding) மூலம் உங்கள் பணம் வேகமாக வளரும்."
+    }
+  ],
+  "us-treasury-bond-yields-tamil": [
+    {
+      id: "q1",
+      question: "அமெரிக்க டிரஷரி பாண்ட் ஈல்ட் உயர்வினால் இந்திய பங்குச்சந்தைக்கு என்னவாகும்?",
+      options: ["வெளிநாட்டு முதலீடுகள் (FII) வெளியேற வாய்ப்பு", "இந்திய சந்தை உடனடியாக உயரும்", "டாலர் மதிப்பு பாதியாகக் குறையும்", "எந்த மாற்றமும் இருக்காது"],
+      correct: 0,
+      explanation: "அமெரிக்க கடன் பத்திர வட்டி உயரும் போது வெளிநாட்டு முதலீட்டாளர்கள் பாதுகாப்பான அமெரிக்க பாண்டுகளில் முதலீடு செய்ய விரும்புவர்."
+    },
+    {
+      id: "q2",
+      question: "டிரஷரி பாண்ட் (Treasury Bond) என்பது யார் வெளியிடும் கடன் பத்திரம்?",
+      options: ["தனியார் வங்கி", "அமெரிக்க அரசாங்கம்", "தொழில்நுட்ப நிறுவனங்கள்", "பங்குச்சந்தை தரகர்கள்"],
+      correct: 1,
+      explanation: "அமெரிக்க டிரஷரி பாண்டுகள் அமெரிக்க அரசாங்கத்தால் வெளியிடப்படும் அதிகாரப்பூர்வ கடன் பத்திரங்களாகும்."
+    }
+  ],
+  "tesla-robotaxi-tamil-analysis": [
+    {
+      id: "q1",
+      question: "டெஸ்லா ரோபோடாக்ஸி சேவையின் முக்கிய நன்மை என்னவாக இருக்கும்?",
+      options: ["பயணக் கட்டணம் மற்றும் செலவு பெருமளவு குறையும்", "டிரைவர் சம்பளம் அதிகமாகும்", "மின்சார பயன்பாடு நிறுத்தப்படும்", "வேகம் மட்டுமே அதிகமாகும்"],
+      correct: 0,
+      explanation: "ஓட்டுநர் இல்லாத தானியங்கி மின்சார டாக்சிகள் மூலம் ஒரு மைலுக்கான போக்குவரத்து செலவு 80% வரை குறையும்."
+    },
+    {
+      id: "q2",
+      question: "ரோபோடாக்ஸி தொழில் நுட்பத்தில் முதன்மையான இயக்கி எது?",
+      options: ["தானியங்கி செயற்கை நுண்ணறிவு (AI) & Full Self Driving", "மனித ஓட்டுநர்", "நீராவி என்ஜின்", "குதிரை வண்டி"],
+      correct: 0,
+      explanation: "தானியங்கி AI மற்றும் கேமரா சென்சார்கள் மூலமே ரோபோடாக்ஸிக்கள் பாதுகாப்பாக இயக்கப்படுகின்றன."
+    }
+  ]
+};
+
+const GENERIC_FALLBACK_QUIZ = [
+  {
+    id: "fq1",
+    question: "இக்கட்டுரையின் முக்கிய நிதி நோக்கம் என்ன?",
+    options: ["நிதி விழிப்புணர்வு பெற உதவுவது", "பயமுறுத்துவது", "வர்த்தகத்தை நிறுத்துவது", "எதுவுமில்லை"],
+    correct: 0,
+    explanation: "FimBlogs நிதிச் செய்திகளையும் பொருளாதாரக் கருத்துக்களையும் எளிய தமிழில் வாசகர்களுக்கு விளக்குவதை நோக்கமாகக் கொண்டுள்ளது."
+  },
+  {
+    id: "fq2",
+    question: "நிதித் திட்டமிடலில் (Financial Planning) எது முதன்மையானது?",
+    options: ["சீரான சேமிப்பு மற்றும் முதலீடு", "தேவையற்ற கடன்கள் வாங்குவது", "ஒரே நாளில் பணம் சம்பாதிக்க நினைப்பது", "திட்டமிடல் இல்லாமை"],
+    correct: 0,
+    explanation: "சீரான சேமிப்பு மற்றும் உத்திகளுடனான முதலீடே நிதி சுதந்திரத்திற்கு வழிவகுக்கும்."
+  }
+];
+
+const QuizWidget = function({ article }) {
+  const [questions, setQuestions] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    const loadQuiz = async () => {
+      let qList = null;
+      if (article && article.id) {
+        const remoteQuiz = await SupabaseService.fetchQuizByArticleId(article.id);
+        if (remoteQuiz) {
+          const remoteQuestions = await SupabaseService.fetchQuestionsByQuizId(remoteQuiz.id);
+          if (remoteQuestions && remoteQuestions.length > 0) {
+            qList = remoteQuestions.map(q => ({
+              id: q.id,
+              question: q.question_text,
+              options: q.options || [],
+              correct: q.correct_option_index,
+              explanation: q.explanation || ""
+            }));
+          }
+        }
+      }
+      if (!qList) {
+        const localQuizzes = StorageService.getQuizzes();
+        const foundLocal = localQuizzes.find(q => q.articleId === article.id || q.articleSlug === article.slug);
+        if (foundLocal && foundLocal.questions && foundLocal.questions.length > 0) {
+          qList = foundLocal.questions;
+        }
+      }
+      if (!qList) {
+        qList = DEFAULT_QUIZZES[article.id] || DEFAULT_QUIZZES[article.slug] || GENERIC_FALLBACK_QUIZ;
+      }
+      setQuestions(qList);
+      setCurrentIndex(0);
+      setSelectedAnswers({});
+      setSubmitted(false);
+      setScore(0);
+    };
+    loadQuiz();
+  }, [article.id, article.slug]);
+
+  if (!questions || questions.length === 0) return null;
+
+  const currentQ = questions[currentIndex];
+  const totalQuestions = questions.length;
+  const progressPercent = Math.round(((currentIndex + 1) / totalQuestions) * 100);
+
+  const handleSelectOption = (optIdx) => {
+    if (submitted) return;
+    setSelectedAnswers(prev => ({ ...prev, [currentIndex]: optIdx }));
+  };
+
+  const handleNext = () => {
+    if (currentIndex < totalQuestions - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  const handleSubmit = () => {
+    let calculatedScore = 0;
+    questions.forEach((q, idx) => {
+      if (selectedAnswers[idx] === q.correct) {
+        calculatedScore += 1;
+      }
+    });
+    setScore(calculatedScore);
+    setSubmitted(true);
+
+    SupabaseService.saveQuizAttempt({
+      article_id: article.id,
+      score: calculatedScore,
+      total_questions: totalQuestions,
+      completed_at: new Date().toISOString()
+    });
+  };
+
+  const handleRetake = () => {
+    setSelectedAnswers({});
+    setCurrentIndex(0);
+    setSubmitted(false);
+    setScore(0);
+  };
+
+  const handleShareScore = () => {
+    const text = `நான் FimBlogs-இல் "${article.title}" வினாடி-வினாவில் ${score}/${totalQuestions} மதிப்பெண்கள் பெற்றுள்ளேன்! நீங்களும் விளையாடிப் பாருங்கள்: ${window.location.href}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const scorePercentage = Math.round((score / totalQuestions) * 100);
+
+  if (submitted) {
+    let wishEmoji = "🏆";
+    let wishTitle = "வாழ்த்துக்கள்! (Outstanding!)";
+    let wishMsg = "நீங்கள் இந்த கட்டுரையின் நிதித் கருத்துக்களை சிறப்பாக புரிந்துகொண்டுள்ளீர்கள்! தமிழ் நிதி அறிவை மேலும் வளர்த்துக்கொள்ள தொடர்ந்து படியுங்கள்.";
+
+    if (scorePercentage < 50) {
+      wishEmoji = "📘";
+      wishTitle = "நல்ல முயற்சி! (Keep Learning!)";
+      wishMsg = "கட்டுரையை மீண்டும் ஒருமுறை படித்து உங்கள் பங்குச்சந்தை மற்றும் நிதி அறிவை மேம்படுத்திக் கொள்ளுங்கள்!";
+    } else if (scorePercentage < 100) {
+      wishEmoji = "🌟";
+      wishTitle = "சிறப்பான திறன்! (Great Job!)";
+      wishMsg = "பெரும்பாலான கேள்விகளுக்கு சரியாக பதிலளித்துள்ளீர்கள். நீர் ஒரு வளர்ந்து வரும் நிதி நிபுணர்!";
+    }
+
+    return React.createElement("div", { className: "mcq-quiz-card" },
+      React.createElement("div", { className: "quiz-wish-banner" },
+        React.createElement("div", { className: "wish-emoji-badge" }, wishEmoji),
+        React.createElement("h2", { className: "wish-title" }, wishTitle),
+        React.createElement("p", { className: "wish-message" }, wishMsg),
+
+        React.createElement("div", { className: "score-badge-big" },
+          React.createElement("span", { className: "score-badge-number" }, `${score} / ${totalQuestions}`),
+          React.createElement("span", { className: "score-badge-sub" }, `${scorePercentage}% Accuracy Score`)
+        ),
+
+        React.createElement("div", { style: { display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' } },
+          React.createElement("button", { className: "btn-primary", onClick: handleRetake, style: { background: 'var(--primary)' } }, "🔄 வினாடி வினாவை மீண்டும் செய்ய (Retake Quiz)"),
+          React.createElement("button", { className: "btn-primary", onClick: handleShareScore, style: { background: '#25D366' } }, "💬 மதிப்பெண்ணை வாட்ஸ்அப்பில் பகிர (Share Result)")
+        )
+      )
+    );
+  }
+
+  const selectedOpt = selectedAnswers[currentIndex];
+  const isAnswered = selectedOpt !== undefined;
+
+  return React.createElement("div", { className: "mcq-quiz-card" },
+    React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+      React.createElement("span", { className: "quiz-header-badge" }, "💡 3-Min Tamil Quiz Challenge"),
+      React.createElement("span", { style: { fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' } }, `Question ${currentIndex + 1} of ${totalQuestions}`)
+    ),
+
+    React.createElement("div", { className: "quiz-progress-bar-bg" },
+      React.createElement("div", { className: "quiz-progress-bar-fill", style: { width: `${progressPercent}%` } })
+    ),
+
+    React.createElement("h3", { className: "quiz-question-title" }, currentQ.question),
+
+    React.createElement("div", { className: "quiz-options-list" },
+      currentQ.options.map((optText, optIdx) => {
+        let btnClass = "quiz-option-btn";
+        if (selectedOpt === optIdx) {
+          btnClass += " selected";
+        }
+        const letter = String.fromCharCode(65 + optIdx);
+
+        return React.createElement("button", {
+          key: optIdx,
+          className: btnClass,
+          onClick: () => handleSelectOption(optIdx)
+        },
+          React.createElement("span", { className: "quiz-option-letter" }, letter),
+          React.createElement("span", { style: { flexGrow: 1 } }, optText)
+        );
+      })
+    ),
+
+    isAnswered && currentQ.explanation && React.createElement("div", { className: "quiz-explanation-box" },
+      React.createElement("strong", { style: { color: 'var(--accent)', display: 'block', marginBottom: '4px' } }, "விளக்கம் (Explanation):"),
+      currentQ.explanation
+    ),
+
+    React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' } },
+      React.createElement("button", {
+        className: "btn-secondary",
+        onClick: handlePrev,
+        disabled: currentIndex === 0,
+        style: { opacity: currentIndex === 0 ? 0.5 : 1 }
+      }, "← முந்தைய (Prev)"),
+
+      currentIndex < totalQuestions - 1 ?
+        React.createElement("button", {
+          className: "btn-primary",
+          onClick: handleNext,
+          disabled: !isAnswered,
+          style: { opacity: !isAnswered ? 0.6 : 1 }
+        }, "அடுத்த கேள்வி (Next) →") :
+        React.createElement("button", {
+          className: "btn-primary",
+          onClick: handleSubmit,
+          disabled: Object.keys(selectedAnswers).length < totalQuestions,
+          style: { background: 'var(--accent)', opacity: Object.keys(selectedAnswers).length < totalQuestions ? 0.6 : 1 }
+        }, "முடிவுகளைக் காண்க (Complete Quiz) 🎉")
+    )
+  );
+};
+
 const ArticleDetailView = function({ slug }) {
   const app = useApp();
   const article = app.articles.find(a => a.slug === slug) || app.articles[0];
@@ -485,7 +940,9 @@ const ArticleDetailView = function({ slug }) {
       React.createElement("h1", { className: "article-full-title" }, article.title)
     ),
     React.createElement("div", { className: "featured-img-container" }, React.createElement("img", { src: article.image, alt: article.title, style: { width: '100%', maxHeight: '440px', objectFit: 'cover' } })),
-    React.createElement("div", { className: "article-content", dangerouslySetInnerHTML: { __html: article.content } })
+    React.createElement("div", { className: "article-content", dangerouslySetInnerHTML: { __html: article.content } }),
+    React.createElement(SocialShareBar, { article: article }),
+    React.createElement(QuizWidget, { article: article })
   );
 };
 
@@ -630,9 +1087,187 @@ const FooterMenuEditorSection = function() {
   );
 };
 
+// QUIZ EDITOR SECTION
+const QuizEditorSection = function() {
+  const app = useApp();
+  const [selectedArticleId, setSelectedArticleId] = useState(app.articles[0]?.id || "");
+  const [questions, setQuestions] = useState([]);
+  const [qText, setQText] = useState("");
+  const [opt0, setOpt0] = useState("");
+  const [opt1, setOpt1] = useState("");
+  const [opt2, setOpt2] = useState("");
+  const [opt3, setOpt3] = useState("");
+  const [correctIdx, setCorrectIdx] = useState(0);
+  const [explanation, setExplanation] = useState("");
+
+  useEffect(() => {
+    if (!selectedArticleId) return;
+    const targetArt = app.articles.find(a => a.id === selectedArticleId);
+    if (!targetArt) return;
+
+    const localQuizzes = StorageService.getQuizzes();
+    const found = localQuizzes.find(q => q.articleId === targetArt.id || q.articleSlug === targetArt.slug);
+    if (found && found.questions) {
+      setQuestions(found.questions);
+    } else if (DEFAULT_QUIZZES[targetArt.id] || DEFAULT_QUIZZES[targetArt.slug]) {
+      setQuestions(DEFAULT_QUIZZES[targetArt.id] || DEFAULT_QUIZZES[targetArt.slug]);
+    } else {
+      setQuestions(GENERIC_FALLBACK_QUIZ);
+    }
+  }, [selectedArticleId, app.articles]);
+
+  const handleAddQuestion = (e) => {
+    e.preventDefault();
+    if (!qText.trim() || !opt0.trim() || !opt1.trim()) {
+      alert("Please fill question text and at least 2 options.");
+      return;
+    }
+    const newQ = {
+      id: "q_" + Date.now(),
+      question: qText.trim(),
+      options: [opt0.trim(), opt1.trim(), opt2.trim(), opt3.trim()].filter(Boolean),
+      correct: parseInt(correctIdx),
+      explanation: explanation.trim()
+    };
+    const updatedQs = [...questions, newQ];
+    setQuestions(updatedQs);
+
+    const targetArt = app.articles.find(a => a.id === selectedArticleId);
+    const localQuizzes = StorageService.getQuizzes().filter(q => q.articleId !== selectedArticleId);
+    localQuizzes.push({ articleId: targetArt.id, articleSlug: targetArt.slug, questions: updatedQs });
+    StorageService.saveQuizzes(localQuizzes);
+
+    setQText(""); setOpt0(""); setOpt1(""); setOpt2(""); setOpt3(""); setExplanation("");
+  };
+
+  const handleDeleteQuestion = (qId) => {
+    const updatedQs = questions.filter(q => q.id !== qId);
+    setQuestions(updatedQs);
+    const targetArt = app.articles.find(a => a.id === selectedArticleId);
+    const localQuizzes = StorageService.getQuizzes().filter(q => q.articleId !== selectedArticleId);
+    localQuizzes.push({ articleId: targetArt.id, articleSlug: targetArt.slug, questions: updatedQs });
+    StorageService.saveQuizzes(localQuizzes);
+  };
+
+  return React.createElement("div", { style: { background: 'var(--bg-card)', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
+    React.createElement("h3", { style: { fontSize: '1.25rem', fontWeight: 800, marginBottom: '1rem' } }, "Article Quiz Management Console"),
+
+    React.createElement("div", { style: { marginBottom: '1.5rem' } },
+      React.createElement("label", { style: { fontWeight: 700, display: 'block', fontSize: '0.85rem', marginBottom: '6px' } }, "Select Article to Manage Quiz:"),
+      React.createElement("select", { className: "input-styled", style: { width: '100%' }, value: selectedArticleId, onChange: e => setSelectedArticleId(e.target.value) },
+        app.articles.map(a => React.createElement("option", { key: a.id, value: a.id }, a.title))
+      )
+    ),
+
+    React.createElement("form", { onSubmit: handleAddQuestion, style: { background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '2rem' } },
+      React.createElement("h4", { style: { fontWeight: 800, marginBottom: '1rem' } }, "+ Add MCQ Question"),
+
+      React.createElement("div", { style: { marginBottom: '1rem' } },
+        React.createElement("label", { style: { fontWeight: 700, display: 'block', fontSize: '0.85rem', marginBottom: '4px' } }, "Question Text (Tamil)"),
+        React.createElement("input", { type: "text", className: "input-styled", style: { width: '100%' }, placeholder: "e.g. முதலீட்டின் அபாயத்தைக் குறைக்க என்ன செய்ய வேண்டும்?", value: qText, onChange: e => setQText(e.target.value), required: true })
+      ),
+
+      React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '1rem' } },
+        React.createElement("input", { type: "text", className: "input-styled", placeholder: "Option A", value: opt0, onChange: e => setOpt0(e.target.value), required: true }),
+        React.createElement("input", { type: "text", className: "input-styled", placeholder: "Option B", value: opt1, onChange: e => setOpt1(e.target.value), required: true }),
+        React.createElement("input", { type: "text", className: "input-styled", placeholder: "Option C (Optional)", value: opt2, onChange: e => setOpt2(e.target.value) }),
+        React.createElement("input", { type: "text", className: "input-styled", placeholder: "Option D (Optional)", value: opt3, onChange: e => setOpt3(e.target.value) })
+      ),
+
+      React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', marginBottom: '1rem' } },
+        React.createElement("div", null,
+          React.createElement("label", { style: { fontWeight: 700, display: 'block', fontSize: '0.85rem', marginBottom: '4px' } }, "Correct Choice"),
+          React.createElement("select", { className: "input-styled", style: { width: '100%' }, value: correctIdx, onChange: e => setCorrectIdx(e.target.value) },
+            React.createElement("option", { value: 0 }, "Option A"),
+            React.createElement("option", { value: 1 }, "Option B"),
+            React.createElement("option", { value: 2 }, "Option C"),
+            React.createElement("option", { value: 3 }, "Option D")
+          )
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style: { fontWeight: 700, display: 'block', fontSize: '0.85rem', marginBottom: '4px' } }, "Explanation / Takeaway"),
+          React.createElement("input", { type: "text", className: "input-styled", style: { width: '100%' }, placeholder: "Brief explanation for readers", value: explanation, onChange: e => setExplanation(e.target.value) })
+        )
+      ),
+
+      React.createElement("button", { type: "submit", className: "btn-primary", style: { width: '100%' } }, "+ Add Question to Quiz")
+    ),
+
+    React.createElement("h4", { style: { fontWeight: 800, marginBottom: '1rem' } }, `Current Quiz Questions (${questions.length})`),
+    React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: '10px' } },
+      questions.map((q, idx) =>
+        React.createElement("div", { key: q.id || idx, style: { padding: '1rem', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontWeight: 800 } }, `${idx + 1}. ${q.question}`),
+            React.createElement("div", { style: { fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' } }, `Correct: Option ${String.fromCharCode(65 + q.correct)} (${q.options[q.correct]})`),
+            q.explanation && React.createElement("div", { style: { fontSize: '0.80rem', color: 'var(--accent)', marginTop: '2px', fontStyle: 'italic' } }, `Explanation: ${q.explanation}`)
+          ),
+          React.createElement("button", { className: "btn-secondary", style: { color: '#ef4444', fontSize: '0.8rem' }, onClick: () => handleDeleteQuestion(q.id) }, "Delete")
+        )
+      )
+    )
+  );
+};
+
 // ARTICLE EDITOR SECTION
 const AdminArticleEditor = function({ form, setForm, handleSaveForm, app }) {
   const [editorMode, setEditorMode] = useState("html");
+
+  // Embedded Quiz Builder State for current article
+  const [quizQuestions, setQuizQuestions] = useState([]);
+  const [qText, setQText] = useState("");
+  const [opt0, setOpt0] = useState("");
+  const [opt1, setOpt1] = useState("");
+  const [opt2, setOpt2] = useState("");
+  const [opt3, setOpt3] = useState("");
+  const [correctIdx, setCorrectIdx] = useState(0);
+  const [explanation, setExplanation] = useState("");
+
+  // Load existing quiz for this article
+  useEffect(() => {
+    if (!form) return;
+    const localQuizzes = StorageService.getQuizzes();
+    const found = localQuizzes.find(q => q.articleId === form.id || q.articleSlug === form.slug);
+    if (found && found.questions && found.questions.length > 0) {
+      setQuizQuestions(found.questions);
+    } else if (DEFAULT_QUIZZES[form.id] || DEFAULT_QUIZZES[form.slug]) {
+      setQuizQuestions(DEFAULT_QUIZZES[form.id] || DEFAULT_QUIZZES[form.slug]);
+    } else {
+      setQuizQuestions([]);
+    }
+  }, [form.id, form.slug]);
+
+  const handleAddQuizQuestion = (e) => {
+    e.preventDefault();
+    if (!qText.trim() || !opt0.trim() || !opt1.trim()) {
+      alert("Please enter question text and at least 2 options.");
+      return;
+    }
+    const newQ = {
+      id: "q_" + Date.now(),
+      question: qText.trim(),
+      options: [opt0.trim(), opt1.trim(), opt2.trim(), opt3.trim()].filter(Boolean),
+      correct: parseInt(correctIdx),
+      explanation: explanation.trim()
+    };
+    const updated = [...quizQuestions, newQ];
+    setQuizQuestions(updated);
+
+    // Save quiz into LocalStorage for this article
+    const localQuizzes = StorageService.getQuizzes().filter(q => q.articleId !== form.id && q.articleSlug !== form.slug);
+    localQuizzes.push({ articleId: form.id, articleSlug: form.slug, questions: updated });
+    StorageService.saveQuizzes(localQuizzes);
+
+    setQText(""); setOpt0(""); setOpt1(""); setOpt2(""); setOpt3(""); setExplanation("");
+  };
+
+  const handleDeleteQuizQuestion = (qId) => {
+    const updated = quizQuestions.filter(q => q.id !== qId);
+    setQuizQuestions(updated);
+    const localQuizzes = StorageService.getQuizzes().filter(q => q.articleId !== form.id && q.articleSlug !== form.slug);
+    localQuizzes.push({ articleId: form.id, articleSlug: form.slug, questions: updated });
+    StorageService.saveQuizzes(localQuizzes);
+  };
 
   const textOnly = useMemo(() => {
     const tmp = document.createElement("DIV");
@@ -789,7 +1424,52 @@ const AdminArticleEditor = function({ form, setForm, handleSaveForm, app }) {
           })
       ),
 
-      React.createElement("button", { type: "submit", className: "btn-primary", style: { width: '100%', padding: '0.75rem' } }, "Publish Briefing Article")
+      /* EMBEDDED ARTICLE QUIZ BUILDER SECTION */
+      React.createElement("div", { style: { marginTop: '2rem', marginBottom: '1.5rem', borderTop: '2px dashed var(--border-color)', paddingTop: '1.5rem' } },
+        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' } },
+          React.createElement("h3", { style: { fontSize: '1.1rem', fontWeight: 800 } }, "💡 Article MCQ Quiz Builder (Optional)"),
+          React.createElement("span", { style: { fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-light)', padding: '2px 8px', borderRadius: '99px' } }, `${quizQuestions.length} Questions Configured`)
+        ),
+
+        /* Existing Quiz Questions for this article */
+        quizQuestions.length > 0 ?
+          React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.25rem' } },
+            quizQuestions.map((q, idx) =>
+              React.createElement("div", { key: q.id || idx, style: { padding: '10px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                React.createElement("div", null,
+                  React.createElement("div", { style: { fontWeight: 700, fontSize: '0.875rem' } }, `${idx + 1}. ${q.question}`),
+                  React.createElement("div", { style: { fontSize: '0.775rem', color: 'var(--text-muted)' } }, `Correct: ${q.options[q.correct]} (Option ${String.fromCharCode(65 + q.correct)})`)
+                ),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: { color: '#ef4444', padding: '2px 8px', fontSize: '0.75rem' }, onClick: () => handleDeleteQuizQuestion(q.id) }, "Delete")
+              )
+            )
+          ) :
+          React.createElement("p", { style: { fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', marginBottom: '1rem' } }, "No custom quiz added yet. You can add MCQ questions below for readers to take on this article!"),
+
+        /* Form to add a new question */
+        React.createElement("div", { style: { background: 'var(--bg-surface)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' } },
+          React.createElement("div", { style: { fontWeight: 700, fontSize: '0.85rem', marginBottom: '8px' } }, "+ Add MCQ Question to this Article"),
+          React.createElement("input", { type: "text", className: "input-styled", style: { width: '100%', marginBottom: '8px', fontSize: '0.85rem' }, placeholder: "Question Text (Tamil)", value: qText, onChange: e => setQText(e.target.value) }),
+          React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' } },
+            React.createElement("input", { type: "text", className: "input-styled", style: { fontSize: '0.8rem' }, placeholder: "Option A", value: opt0, onChange: e => setOpt0(e.target.value) }),
+            React.createElement("input", { type: "text", className: "input-styled", style: { fontSize: '0.8rem' }, placeholder: "Option B", value: opt1, onChange: e => setOpt1(e.target.value) }),
+            React.createElement("input", { type: "text", className: "input-styled", style: { fontSize: '0.8rem' }, placeholder: "Option C", value: opt2, onChange: e => setOpt2(e.target.value) }),
+            React.createElement("input", { type: "text", className: "input-styled", style: { fontSize: '0.8rem' }, placeholder: "Option D", value: opt3, onChange: e => setOpt3(e.target.value) })
+          ),
+          React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '6px', marginBottom: '10px' } },
+            React.createElement("select", { className: "input-styled", style: { fontSize: '0.8rem' }, value: correctIdx, onChange: e => setCorrectIdx(e.target.value) },
+              React.createElement("option", { value: 0 }, "Option A is Correct"),
+              React.createElement("option", { value: 1 }, "Option B is Correct"),
+              React.createElement("option", { value: 2 }, "Option C is Correct"),
+              React.createElement("option", { value: 3 }, "Option D is Correct")
+            ),
+            React.createElement("input", { type: "text", className: "input-styled", style: { fontSize: '0.8rem' }, placeholder: "Explanation / Takeaway for reader", value: explanation, onChange: e => setExplanation(e.target.value) })
+          ),
+          React.createElement("button", { type: "button", className: "btn-secondary", style: { width: '100%', background: 'var(--accent-light)', color: 'var(--accent)', fontWeight: 700 }, onClick: handleAddQuizQuestion }, "+ Attach Question to Article Quiz")
+        )
+      ),
+
+      React.createElement("button", { type: "submit", className: "btn-primary", style: { width: '100%', padding: '0.75rem', marginTop: '1rem' } }, "Publish Briefing Article")
     ),
 
     /* SEO ENGINE & CHECKLIST AUDIT */
@@ -842,8 +1522,153 @@ const AdminArticleEditor = function({ form, setForm, handleSaveForm, app }) {
         React.createElement("h4", { style: { fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase' } }, "Google SERP Live Preview"),
         React.createElement("div", { className: "seo-preview-box" },
           React.createElement("div", { className: "google-title" }, form.seoTitle || form.title || "Article Title | FimBlogs"),
-          React.createElement("div", { className: "google-url" }, "https://fimblogs.com/posts/" + (form.slug || 'article-slug')),
+          React.createElement("div", { className: "google-url" }, "https://fimblogs.in/posts/" + (form.slug || 'article-slug')),
           React.createElement("div", { className: "google-desc" }, form.seoDescription || form.excerpt || "Google SERP snippet snippet preview.")
+        )
+      )
+    )
+  );
+};
+
+// SEO & GENERATIVE ENGINE OPTIMIZATION (GEO) CONSOLE SECTION
+const SeoConsoleSection = function() {
+  const app = useApp();
+  const [copiedType, setCopiedType] = useState("");
+
+  const copyToClipboard = (text, type) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedType(type);
+      setTimeout(() => setCopiedType(""), 3000);
+    }
+  };
+
+  const sitemapXMLContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://fimblogs.in/</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>1.0</priority>
+  </url>
+${app.articles.map(a => `  <url>
+    <loc>https://fimblogs.in/#/article/${a.slug}</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>0.8</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+  const robotsTxtContent = `User-agent: *
+Allow: /
+Allow: /css/
+Allow: /js/
+Disallow: /#/secret-admin/
+
+# AI Generative Engines Explicit Access
+User-agent: GPTBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: https://fimblogs.in/sitemap.xml
+Host: https://fimblogs.in`;
+
+  return React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: '2rem' } },
+    React.createElement("div", { style: { background: 'var(--bg-card)', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
+      React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' } },
+        React.createElement("h2", { style: { fontSize: '1.4rem', fontWeight: 800 } }, "🔍 Google SERP & AI Search Sitelinks Preview (fimblogs.in)"),
+        React.createElement("span", { style: { background: '#dcfce7', color: '#15803d', fontWeight: 800, fontSize: '0.8rem', padding: '4px 12px', borderRadius: '99px' } }, "Google & AI Sitelinks Active")
+      ),
+      React.createElement("p", { style: { color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' } },
+        "Below is how FimBlogs.in appears on Google Search & AI Search Overviews (Gemini, ChatGPT Search, Perplexity), complete with multi-column sitelinks and brand verification."
+      ),
+
+      /* GOOGLE SERP SITELINKS PREVIEW CARD (MATCHING FINSHOTS.IN SCREENSHOT) */
+      React.createElement("div", { className: "serp-sitelinks-container" },
+        React.createElement("div", { className: "serp-site-header" },
+          React.createElement("div", { className: "serp-site-icon" }, "F"),
+          React.createElement("div", null,
+            React.createElement("div", { className: "serp-site-name" }, "FimBlogs"),
+            React.createElement("div", { className: "serp-site-url" }, "https://fimblogs.in")
+          )
+        ),
+        React.createElement("div", { className: "serp-site-title" }, "FimBlogs | Financial News made simple in Tamil"),
+        React.createElement("div", { className: "serp-site-snippet" },
+          "Delivering high-signal macro economics, equity research, and capital market insights in simple Tamil. Read key financial news in 3 minutes."
+        ),
+
+        React.createElement("div", { className: "serp-sitelinks-grid" },
+          React.createElement("div", { className: "sitelink-item" },
+            React.createElement("div", { className: "sitelink-title" }, "Top Articles"),
+            React.createElement("div", { className: "sitelink-desc" }, app.articles[0]?.title || "இந்திய பங்குச்சந்தை 2026 முக்கிய வழிகாட்டி...")
+          ),
+          React.createElement("div", { className: "sitelink-item" },
+            React.createElement("div", { className: "sitelink-title" }, "Daily Insights"),
+            React.createElement("div", { className: "sitelink-desc" }, "3 Min reads that are fun, insightful and easy to understand in Tamil...")
+          ),
+          React.createElement("div", { className: "sitelink-item" },
+            React.createElement("div", { className: "sitelink-title" }, "Markets & Equity"),
+            React.createElement("div", { className: "sitelink-desc" }, "Every week we bring you the most important capital market developments...")
+          ),
+          React.createElement("div", { className: "sitelink-item" },
+            React.createElement("div", { className: "sitelink-title" }, "Personal Finance"),
+            React.createElement("div", { className: "sitelink-desc" }, "SIP investment strategies, tax planning, and wealth compounding...")
+          )
+        )
+      )
+    ),
+
+    /* SITEMAP.XML & ROBOTS.TXT MANAGEMENT */
+    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' } },
+      React.createElement("div", { style: { background: 'var(--bg-card)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
+        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' } },
+          React.createElement("h3", { style: { fontSize: '1.1rem', fontWeight: 800 } }, "📄 XML Sitemap (https://fimblogs.in/sitemap.xml)"),
+          React.createElement("button", { className: "btn-secondary", style: { fontSize: '0.8rem' }, onClick: () => copyToClipboard(sitemapXMLContent, "sitemap") }, copiedType === "sitemap" ? "✓ Copied!" : "Copy XML")
+        ),
+        React.createElement("textarea", {
+          readOnly: true,
+          className: "input-styled",
+          style: { width: '100%', height: '180px', fontFamily: 'monospace', fontSize: '0.775rem' },
+          value: sitemapXMLContent
+        })
+      ),
+
+      React.createElement("div", { style: { background: 'var(--bg-card)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
+        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' } },
+          React.createElement("h3", { style: { fontSize: '1.1rem', fontWeight: 800 } }, "🤖 Crawler & AI Directives (robots.txt)"),
+          React.createElement("button", { className: "btn-secondary", style: { fontSize: '0.8rem' }, onClick: () => copyToClipboard(robotsTxtContent, "robots") }, copiedType === "robots" ? "✓ Copied!" : "Copy Robots.txt")
+        ),
+        React.createElement("textarea", {
+          readOnly: true,
+          className: "input-styled",
+          style: { width: '100%', height: '180px', fontFamily: 'monospace', fontSize: '0.775rem' },
+          value: robotsTxtContent
+        })
+      )
+    ),
+
+    /* GENERATIVE ENGINE OPTIMIZATION (GEO) & REGIONAL TAMIL AUDIT */
+    React.createElement("div", { style: { background: 'var(--bg-card)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
+      React.createElement("h3", { style: { fontSize: '1.1rem', fontWeight: 800, marginBottom: '1rem' } }, "🤖 AI Generative Engine Optimization (GEO) & Regional Target Audit"),
+      React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' } },
+        React.createElement("div", { style: { padding: '12px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border-color)' } },
+          React.createElement("div", { style: { fontSize: '0.8rem', color: 'var(--text-muted)' } }, "Production Domain"),
+          React.createElement("div", { style: { fontWeight: 800, color: 'var(--accent)' } }, "https://fimblogs.in")
+        ),
+        React.createElement("div", { style: { padding: '12px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border-color)' } },
+          React.createElement("div", { style: { fontSize: '0.8rem', color: 'var(--text-muted)' } }, "AI Engine Access"),
+          React.createElement("div", { style: { fontWeight: 800, color: 'var(--accent)' } }, "GPTBot, Gemini & Perplexity Enabled")
+        ),
+        React.createElement("div", { style: { padding: '12px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border-color)' } },
+          React.createElement("div", { style: { fontSize: '0.8rem', color: 'var(--text-muted)' } }, "Target Geo Region"),
+          React.createElement("div", { style: { fontWeight: 800, color: 'var(--accent)' } }, "IN-TN (Tamil Nadu, India)")
+        ),
+        React.createElement("div", { style: { padding: '12px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border-color)' } },
+          React.createElement("div", { style: { fontSize: '0.8rem', color: 'var(--text-muted)' } }, "AI Knowledge Graph Schema"),
+          React.createElement("div", { style: { fontWeight: 800, color: 'var(--accent)' } }, "NewsMediaOrganization + FAQPage")
         )
       )
     )
@@ -913,6 +1738,8 @@ const AdminPanel = function({ tab = "dashboard" }) {
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'dashboard' ? 'active' : ''), onClick: () => navigateToTab('dashboard') }, "Dashboard"),
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'articles' ? 'active' : ''), onClick: () => navigateToTab('articles') }, "Articles (" + app.articles.length + ")"),
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'editor' ? 'active' : ''), onClick: handleCreateNew }, "+ Create Article"),
+        React.createElement("li", { className: "admin-menu-item " + (currentTab === 'quizzes' ? 'active' : ''), onClick: () => navigateToTab('quizzes') }, "Quiz Management"),
+        React.createElement("li", { className: "admin-menu-item " + (currentTab === 'seo' ? 'active' : ''), onClick: () => navigateToTab('seo') }, "SEO & GEO Console"),
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'categories' ? 'active' : ''), onClick: () => navigateToTab('categories') }, "Category Editor"),
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'main-menu' ? 'active' : ''), onClick: () => navigateToTab('main-menu') }, "Main Menu Editor"),
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'footer-menu' ? 'active' : ''), onClick: () => navigateToTab('footer-menu') }, "Footer Menu Editor"),
@@ -962,6 +1789,8 @@ const AdminPanel = function({ tab = "dashboard" }) {
           )
         ) :
       currentTab === "editor" ? React.createElement(AdminArticleEditor, { form, setForm, handleSaveForm, app }) :
+      currentTab === "quizzes" ? React.createElement(QuizEditorSection) :
+      currentTab === "seo" ? React.createElement(SeoConsoleSection) :
       currentTab === "categories" ? React.createElement(CategoryEditorSection) :
       currentTab === "main-menu" ? React.createElement(MainMenuEditorSection) :
       currentTab === "footer-menu" ? React.createElement(FooterMenuEditorSection) : null

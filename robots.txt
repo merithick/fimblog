@@ -1,0 +1,44 @@
+# ==========================================================================
+# FIMBLOGS ROBOTS.TXT - SEARCH ENGINE & AI GENERATIVE ENGINE DIRECTIVES
+# Target: Googlebot, Bingbot, GPTBot, ChatGPT-User, Google-Extended,
+#         PerplexityBot, ClaudeBot, Applebot, Baiduspider
+# Domain: https://fimblogs.in
+# ==========================================================================
+
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /css/
+Allow: /js/
+Allow: /images/
+
+# Explicitly allow AI Search & Generative Engine Crawlers for AI Overviews & Citations
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# Prevent indexing of private administration console routes
+Disallow: /#/secret-admin/
+Disallow: /admin/
+Disallow: /api/
+
+# Specify XML Sitemap locations for automatic search engine & AI indexing
+Sitemap: https://fimblogs.in/sitemap.xml
+Sitemap: https://fimblogs.in/sitemap-news.xml
+
+# Host Directive
+Host: https://fimblogs.in
