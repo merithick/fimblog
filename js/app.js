@@ -292,8 +292,11 @@ const JwtAuthService = {
       "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
     );
     const signatureBuffer = await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(tokenData));
-    const signatureArray = Array.from(new Uint8Array(signatureBuffer));
-    const signatureStr = String.fromCharCode.apply(null, signatureArray);
+    const signatureArray = new Uint8Array(signatureBuffer);
+    let signatureStr = "";
+    for (let i = 0; i < signatureArray.length; i++) {
+      signatureStr += String.fromCharCode(signatureArray[i]);
+    }
     const encodedSignature = JwtAuthService.base64UrlEncode(signatureStr);
 
     return `${tokenData}.${encodedSignature}`;
@@ -376,16 +379,20 @@ const AppProvider = function({ children }) {
   // Validate JWT Token on Provider Mount
   useEffect(() => {
     const validateAdminSession = async () => {
-      const token = sessionStorage.getItem("fimblogs_jwt_token");
-      if (token) {
-        const payload = await JwtAuthService.verifyToken(token);
-        if (payload && payload.role === "admin") {
-          setIsAdminLoggedIn(true);
-        } else {
-          sessionStorage.removeItem("fimblogs_jwt_token");
-          sessionStorage.removeItem("fimblogs_admin");
-          setIsAdminLoggedIn(false);
+      try {
+        const token = sessionStorage.getItem("fimblogs_jwt_token");
+        if (token) {
+          const payload = await JwtAuthService.verifyToken(token);
+          if (payload && payload.role === "admin") {
+            setIsAdminLoggedIn(true);
+          } else {
+            sessionStorage.removeItem("fimblogs_jwt_token");
+            sessionStorage.removeItem("fimblogs_admin");
+            setIsAdminLoggedIn(false);
+          }
         }
+      } catch (e) {
+        console.warn("Session check error:", e);
       }
     };
     validateAdminSession();
