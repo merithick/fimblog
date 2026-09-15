@@ -370,8 +370,9 @@ h1, h2, h3, h4, .hero-title, .hero-title-tamil, .article-card-title, .article-fu
     height: 28px;
     font-size: 0.95rem;
   }
-  .header-actions .btn-subscribe-header {
-    display: none !important; /* Hide subscribe header button on mobile/tablets to prevent header overflow */
+  .header-actions .btn-subscribe-header,
+  .header-actions .btn-whatsapp-header {
+    display: none !important;
   }
 }
 
@@ -513,64 +514,7 @@ h1, h2, h3, h4, .hero-title, .hero-title-tamil, .article-card-title, .article-fu
   transform: scale(0.98);
 }
 
-/* WHATSAPP CHANNEL PROMOTION STYLES */
-.btn-whatsapp-header {
-  background: #25D366 !important;
-  color: white !important;
-  font-weight: 800;
-  font-size: 0.85rem;
-  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.55rem 1rem;
-  border-radius: var(--radius-sm);
-  transition: background 0.2s, transform 0.15s;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-whatsapp-header:hover {
-  background: #1da851 !important;
-  transform: translateY(-1px);
-}
-
-.hero-whatsapp-box {
-  background: var(--bg-card);
-  border: 2px solid #25D366;
-  border-radius: var(--radius-md);
-  padding: 1.25rem 1.5rem;
-  max-width: 520px;
-  box-shadow: 0 10px 25px rgba(37, 211, 102, 0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.btn-whatsapp-hero {
-  background: linear-gradient(135deg, #25D366, #128C7E);
-  color: white !important;
-  font-weight: 800;
-  font-size: 1rem;
-  border: none;
-  padding: 0.85rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
-  transition: transform 0.15s, opacity 0.15s;
-  width: 100%;
-}
-
-.btn-whatsapp-hero:hover {
-  opacity: 0.95;
-  transform: translateY(-2px);
-}
+/* (WhatsApp promotion styles consolidated at end of file) */
 
 /* ATTRACTIVE 3D IPHONE MOCKUP RESPONSIVE */
 .phone-mockup-wrapper {
@@ -1692,24 +1636,28 @@ h1, h2, h3, h4, .hero-title, .hero-title-tamil, .article-card-title, .article-fu
   line-height: 1.4;
 }
 
-/* WHATSAPP CHANNEL PROMOTION STYLES */
+/* WHATSAPP CHANNEL PROMOTION STYLES (single source) */
 .btn-whatsapp-header {
   background: #25d366 !important;
   color: white !important;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-weight: 700;
-  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
   border-radius: 99px;
   text-decoration: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
 }
 
 .btn-whatsapp-header:hover {
   background: #20ba5a !important;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
 }
 
@@ -1717,15 +1665,15 @@ h1, h2, h3, h4, .hero-title, .hero-title-tamil, .article-card-title, .article-fu
   background: linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(16, 185, 129, 0.04));
   border: 1px solid #25d366;
   border-radius: var(--radius-md);
-  padding: 1rem 1.15rem;
-  margin-top: 1.1rem;
+  padding: 0.85rem 1rem;
+  margin-top: 1rem;
   max-width: 480px;
 }
 
 .hero-whatsapp-box-desc {
   font-size: 0.9rem;
   color: var(--text-muted);
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.75rem;
   line-height: 1.45;
 }
 
@@ -1736,11 +1684,13 @@ h1, h2, h3, h4, .hero-title, .hero-title-tamil, .article-card-title, .article-fu
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 0.925rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  padding: 0.65rem 1.25rem;
+  padding: 0.6rem 1.15rem;
   border-radius: 99px;
   text-decoration: none;
+  border: none;
+  cursor: pointer;
   width: 100%;
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
@@ -1752,5 +1702,26 @@ h1, h2, h3, h4, .hero-title, .hero-title-tamil, .article-card-title, .article-fu
   box-shadow: 0 6px 18px rgba(37, 211, 102, 0.4);
 }
 
+/* WhatsApp Mobile Responsive */
+@media (max-width: 900px) {
+  .hero-whatsapp-box {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
 
-
+@media (max-width: 480px) {
+  .hero-whatsapp-box {
+    padding: 0.75rem 0.85rem;
+    margin-top: 0.75rem;
+  }
+  .hero-whatsapp-box-desc {
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+  .btn-whatsapp-hero {
+    font-size: 0.85rem;
+    padding: 0.55rem 1rem;
+  }
+}
