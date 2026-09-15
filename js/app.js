@@ -866,9 +866,9 @@ const QuizWidget = function({ article }) {
   const isAnswered = selectedOpt !== undefined;
 
   return React.createElement("div", { className: "mcq-quiz-card" },
-    React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+    React.createElement("div", { className: "quiz-card-topbar" },
       React.createElement("span", { className: "quiz-header-badge" }, "💡 3-Min Tamil Quiz Challenge"),
-      React.createElement("span", { style: { fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' } }, `Question ${currentIndex + 1} of ${totalQuestions}`)
+      React.createElement("span", { style: { fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' } }, `Question ${currentIndex + 1} of ${totalQuestions}`)
     ),
 
     React.createElement("div", { className: "quiz-progress-bar-bg" },
@@ -901,7 +901,7 @@ const QuizWidget = function({ article }) {
       currentQ.explanation
     ),
 
-    React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' } },
+    React.createElement("div", { className: "quiz-action-bar" },
       React.createElement("button", {
         className: "btn-secondary",
         onClick: handlePrev,
