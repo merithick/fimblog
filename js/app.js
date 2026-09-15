@@ -1049,6 +1049,8 @@ const ArticleDetailView = function({ slug }) {
     React.createElement(SocialShareBar, { article: article }),
     React.createElement(QuizWidget, { article: article })
   );
+};
+
 const STATIC_PAGES = {
   "about-us": {
     title: "About Us - FimBlogs",
