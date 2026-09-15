@@ -253,6 +253,92 @@ const SupabaseService = {
   }
 };
 
+/* ==========================================================================
+   JWT (JSON WEB TOKEN) CRYPTOGRAPHIC AUTHENTICATION & SECURITY ENGINE
+   ========================================================================== */
+const JWT_SECRET = "fimblogs_secure_jwt_secret_key_2026_982347";
+
+const JwtAuthService = {
+  // Utility for Base64URL encoding
+  base64UrlEncode: (str) => {
+    return btoa(str).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  },
+  base64UrlDecode: (str) => {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) { str += '='; }
+    return atob(str);
+  },
+
+  // Generates a HMAC-SHA256 signed JWT Token
+  generateToken: async (payload) => {
+    const header = { alg: "HS256", typ: "JWT" };
+    const now = Math.floor(Date.now() / 1000);
+    const expPayload = {
+      ...payload,
+      iat: now,
+      exp: now + (24 * 60 * 60) // 24 Hours Expiry
+    };
+
+    const encodedHeader = JwtAuthService.base64UrlEncode(JSON.stringify(header));
+    const encodedPayload = JwtAuthService.base64UrlEncode(JSON.stringify(expPayload));
+    const tokenData = `${encodedHeader}.${encodedPayload}`;
+
+    // Cryptographic Signature via Web Crypto API
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(JWT_SECRET);
+    const cryptoKey = await crypto.subtle.importKey(
+      "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+    );
+    const signatureBuffer = await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(tokenData));
+    const signatureArray = Array.from(new Uint8Array(signatureBuffer));
+    const signatureStr = String.fromCharCode.apply(null, signatureArray);
+    const encodedSignature = JwtAuthService.base64UrlEncode(signatureStr);
+
+    return `${tokenData}.${encodedSignature}`;
+  },
+
+  // Verifies JWT Token validity, signature, and expiration
+  verifyToken: async (token) => {
+    if (!token || typeof token !== "string") return false;
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+
+    try {
+      const [encodedHeader, encodedPayload, encodedSignature] = parts;
+      const tokenData = `${encodedHeader}.${encodedPayload}`;
+
+      const encoder = new TextEncoder();
+      const keyData = encoder.encode(JWT_SECRET);
+      const cryptoKey = await crypto.subtle.importKey(
+        "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["verify"]
+      );
+
+      const sigStr = JwtAuthService.base64UrlDecode(encodedSignature);
+      const sigBuf = new Uint8Array(sigStr.length);
+      for (let i = 0; i < sigStr.length; i++) {
+        sigBuf[i] = sigStr.charCodeAt(i);
+      }
+
+      const isValidSignature = await crypto.subtle.verify(
+        "HMAC", cryptoKey, sigBuf, encoder.encode(tokenData)
+      );
+
+      if (!isValidSignature) return false;
+
+      const payload = JSON.parse(JwtAuthService.base64UrlDecode(encodedPayload));
+      const now = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < now) {
+        return false; // Token expired
+      }
+
+      return payload;
+    } catch (e) {
+      console.warn("JWT Verification Security Error:", e);
+      return false;
+    }
+  }
+};
+
 const StorageService = {
   getArticles: () => JSON.parse(localStorage.getItem("fimblogs_articles_v9") || JSON.stringify(INITIAL_ARTICLES)),
   saveArticles: (arts) => localStorage.setItem("fimblogs_articles_v9", JSON.stringify(arts)),
@@ -283,7 +369,25 @@ const AppProvider = function({ children }) {
   const [theme, setTheme] = useState(localStorage.getItem("fimblogs_theme") || "light");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(sessionStorage.getItem("fimblogs_admin") === "true");
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+  // Validate JWT Token on Provider Mount
+  useEffect(() => {
+    const validateAdminSession = async () => {
+      const token = sessionStorage.getItem("fimblogs_jwt_token");
+      if (token) {
+        const payload = await JwtAuthService.verifyToken(token);
+        if (payload && payload.role === "admin") {
+          setIsAdminLoggedIn(true);
+        } else {
+          sessionStorage.removeItem("fimblogs_jwt_token");
+          sessionStorage.removeItem("fimblogs_admin");
+          setIsAdminLoggedIn(false);
+        }
+      }
+    };
+    validateAdminSession();
+  }, []);
 
   // Fetch live articles from Supabase DB on load
   useEffect(() => {
@@ -569,8 +673,6 @@ const SocialShareBar = function({ article }) {
 
     if (platform === 'whatsapp') {
       window.open(`https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`, '_blank');
-    } else if (platform === 'telegram') {
-      window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
     } else if (platform === 'x') {
       window.open(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`, '_blank');
     } else if (platform === 'linkedin') {
@@ -612,11 +714,6 @@ const SocialShareBar = function({ article }) {
       React.createElement("button", { className: "btn-share-icon btn-share-whatsapp", onClick: () => handleShareClick('whatsapp'), title: "Share on WhatsApp", "aria-label": "WhatsApp Share" },
         React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor" },
           React.createElement("path", { d: "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.197 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c-.001 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413" })
-        )
-      ),
-      React.createElement("button", { className: "btn-share-icon btn-share-telegram", onClick: () => handleShareClick('telegram'), title: "Share on Telegram", "aria-label": "Telegram Share" },
-        React.createElement("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor" },
-          React.createElement("path", { d: "M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.562 8.161c-.18.717-.962 4.084-1.362 5.762-.168.707-.428.944-.68.968-.548.051-.965-.36-1.496-.708-.832-.546-1.302-.885-2.11-1.417-.934-.615-.328-.953.204-1.506.139-.145 2.558-2.344 2.605-2.544.006-.025.01-.12-.046-.17-.056-.05-.138-.033-.198-.02-.084.019-1.433.912-4.045 2.678-.383.262-.73.39-1.041.383-.344-.008-1.006-.194-1.498-.354-.604-.196-1.084-.3-1.042-.633.022-.173.262-.35.72-.53 2.825-1.23 4.709-2.042 5.653-2.434 2.688-1.118 3.247-1.313 3.612-1.319.08 0 .259.02.375.115.098.08.125.189.138.265.013.076.029.255.016.395z" })
         )
       ),
       React.createElement("button", { className: "btn-share-icon btn-share-x", onClick: () => handleShareClick('x'), title: "Share on X", "aria-label": "X Share" },
@@ -937,7 +1034,10 @@ const ArticleDetailView = function({ slug }) {
     React.createElement(SEOHead, { title: article.seoTitle || article.title, description: article.excerpt }),
     React.createElement("header", { className: "article-header" },
       React.createElement("span", { className: "article-category-badge" }, article.category),
-      React.createElement("h1", { className: "article-full-title" }, article.title)
+      React.createElement("h1", { className: "article-full-title" }, article.title),
+      React.createElement("div", { style: { fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 600 } },
+        `📅 Published: ${article.date || "14 Sep 2026"} • ⏱️ ${article.readTime || "3 min read"} • 👁️ ${article.views || 0} Views`
+      )
     ),
     React.createElement("div", { className: "featured-img-container" }, React.createElement("img", { src: article.image, alt: article.title, style: { width: '100%', maxHeight: '440px', objectFit: 'cover' } })),
     React.createElement("div", { className: "article-content", dangerouslySetInnerHTML: { __html: article.content } }),
@@ -948,21 +1048,29 @@ const ArticleDetailView = function({ slug }) {
 
 const AdminLogin = function() {
   const app = useApp();
-  const [u, setU] = useState(""); const [p, setP] = useState("");
-  const handleLogin = (e) => {
+  const [u, setU] = useState(""); const [p, setP] = useState(""); const [error, setError] = useState("");
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (u === "admin" && p === "fimblogs2026") {
-      sessionStorage.setItem("fimblogs_admin", "true"); app.setIsAdminLoggedIn(true); window.location.hash = "#/secret-admin/dashboard";
-    } else alert("Invalid credentials.");
+      const token = await JwtAuthService.generateToken({ username: "admin", role: "admin" });
+      sessionStorage.setItem("fimblogs_jwt_token", token);
+      sessionStorage.setItem("fimblogs_admin", "true");
+      app.setIsAdminLoggedIn(true);
+      window.location.hash = "#/secret-admin/dashboard";
+    } else {
+      setError("Security Alert: Invalid administrative credentials.");
+    }
   };
 
   return React.createElement("div", { className: "container container-narrow", style: { padding: '5rem 0' } },
-    React.createElement("div", { style: { background: 'var(--bg-card)', padding: '2.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' } },
-      React.createElement("h2", { style: { textAlign: 'center', marginBottom: '1.5rem' } }, "FimBlogs Portal Management"),
+    React.createElement("div", { style: { background: 'var(--bg-card)', padding: '2.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' } },
+      React.createElement("h2", { style: { textAlign: 'center', marginBottom: '0.5rem' } }, "🔒 Secure Admin Portal Login"),
+      React.createElement("p", { style: { textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' } }, "Protected by JWT HMAC-SHA256 Token Authentication"),
+      error && React.createElement("div", { style: { padding: '10px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center' } }, error),
       React.createElement("form", { onSubmit: handleLogin, style: { display: 'flex', flexDirection: 'column', gap: '1rem' } },
         React.createElement("input", { type: "text", className: "input-styled", placeholder: "Username", value: u, onChange: e => setU(e.target.value) }),
         React.createElement("input", { type: "password", className: "input-styled", placeholder: "Password", value: p, onChange: e => setP(e.target.value) }),
-        React.createElement("button", { type: "submit", className: "btn-primary" }, "Authenticate Portal")
+        React.createElement("button", { type: "submit", className: "btn-primary" }, "Authenticate Session (JWT)")
       )
     )
   );
@@ -1743,7 +1851,7 @@ const AdminPanel = function({ tab = "dashboard" }) {
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'categories' ? 'active' : ''), onClick: () => navigateToTab('categories') }, "Category Editor"),
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'main-menu' ? 'active' : ''), onClick: () => navigateToTab('main-menu') }, "Main Menu Editor"),
         React.createElement("li", { className: "admin-menu-item " + (currentTab === 'footer-menu' ? 'active' : ''), onClick: () => navigateToTab('footer-menu') }, "Footer Menu Editor"),
-        React.createElement("li", { className: "admin-menu-item", style: { marginTop: '2rem', color: '#ef4444' }, onClick: () => { sessionStorage.removeItem("fimblogs_admin"); app.setIsAdminLoggedIn(false); window.location.hash = "#/"; } }, "Exit CMS Portal")
+        React.createElement("li", { className: "admin-menu-item", style: { marginTop: '2rem', color: '#ef4444' }, onClick: () => { sessionStorage.removeItem("fimblogs_jwt_token"); sessionStorage.removeItem("fimblogs_admin"); app.setIsAdminLoggedIn(false); window.location.hash = "#/"; } }, "Exit CMS Portal")
       )
     ),
     React.createElement("div", { className: "admin-main" },
